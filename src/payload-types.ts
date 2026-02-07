@@ -69,6 +69,9 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    urls: Url;
+    reports: Report;
+    'high-value-targets': HighValueTarget;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +81,9 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    urls: UrlsSelect<false> | UrlsSelect<true>;
+    reports: ReportsSelect<false> | ReportsSelect<true>;
+    'high-value-targets': HighValueTargetsSelect<false> | HighValueTargetsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -120,6 +126,8 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: string;
+  name: string;
+  isadmin: boolean;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -160,6 +168,76 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "urls".
+ */
+export interface Url {
+  id: string;
+  url: string;
+  domain: string;
+  status: 'SAFE' | 'SUSPICIOUS' | 'MALICIOUS' | 'UNKNOWN';
+  trust_score?: number | null;
+  reports_count?: number | null;
+  flags?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  redirect_chain?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports".
+ */
+export interface Report {
+  id: string;
+  url_id: string | Url;
+  /**
+   * Supabase User ID
+   */
+  reporter_id: string;
+  comment?: string | null;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  modified_by?: (string | null) | User;
+  screenshot?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "high-value-targets".
+ */
+export interface HighValueTarget {
+  id: string;
+  name: string;
+  official_domain: string;
+  variations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -189,6 +267,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'urls';
+        value: string | Url;
+      } | null)
+    | ({
+        relationTo: 'reports';
+        value: string | Report;
+      } | null)
+    | ({
+        relationTo: 'high-value-targets';
+        value: string | HighValueTarget;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -237,6 +327,8 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  isadmin?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -271,6 +363,46 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "urls_select".
+ */
+export interface UrlsSelect<T extends boolean = true> {
+  url?: T;
+  domain?: T;
+  status?: T;
+  trust_score?: T;
+  reports_count?: T;
+  flags?: T;
+  redirect_chain?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reports_select".
+ */
+export interface ReportsSelect<T extends boolean = true> {
+  url_id?: T;
+  reporter_id?: T;
+  comment?: T;
+  status?: T;
+  modified_by?: T;
+  screenshot?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "high-value-targets_select".
+ */
+export interface HighValueTargetsSelect<T extends boolean = true> {
+  name?: T;
+  official_domain?: T;
+  variations?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

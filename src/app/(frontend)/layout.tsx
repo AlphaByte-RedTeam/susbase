@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  description: 'A crowd-sourced url safety layer to make internet safer',
-  title: 'Susbase | The Crowd-Sourced Link Safety Layer',
+  description: 'Make Internet Safer. Create a massive, open database of malicious links and social engineering traps, powered by crowd intelligence and smart algorithms.',
+  title: 'SusBase: The Crowd-Sourced Link Verification Layer',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
@@ -27,12 +27,12 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${jetbrainsMono.variable}`}>
       <body>
-        <main>
-          <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+          <main>
             {children}
-          </ThemeProvider>
-        </main>
-        <Toaster />
+          </main>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )
