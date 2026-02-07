@@ -40,6 +40,11 @@
 * **Icons:** HugeIcons.
 * **UI Library:** Tailwind CSS + Shadcn UI.
 * **Theme:** "Lyra" / Minimalist Monospace (High contrast, "Terminal-lite" aesthetic).
+* **Accessibility:** WCAG 2.1 AA compliant.
+* **Responsive Design:** Mobile-first approach with breakpoints for tablets and desktops.
+* **Performance:** Optimized for fast load times and smooth interactions.
+* **SEO:** SEO-friendly meta tags, structured data, and optimized images.
+* **Analytics:** Google Analytics for tracking user behavior and performance metrics.
 
 ### Deployment & Hosting
 * **Hosting:** Vercel.
