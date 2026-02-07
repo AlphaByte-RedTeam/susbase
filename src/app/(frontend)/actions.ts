@@ -10,13 +10,11 @@ import { z } from 'zod'
 
 export async function checkUrlAction(prevState: any, formData: FormData) {
   const url = formData.get('url') as string
-
-  // Zod Validation: Ensure valid URL with http/https
-  const urlSchema = z
-    .url()
-    .refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
-      message: 'URL must start with http:// or https://',
-    })
+  
+  // Zod Validation
+  const urlSchema = z.string().url().refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
+    message: "URL must start with http:// or https://"
+  })
 
   const validation = urlSchema.safeParse(url)
   if (!validation.success) {
@@ -25,31 +23,54 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
 
   try {
     const payload = await getPayload({ config })
+    
+    // Normalize: Extract domain strictly
+    let domain = ''
+    try {
+      const urlObj = new URL(url)
+      domain = urlObj.hostname.toLowerCase()
+    } catch (e) {
+      return { error: 'Invalid URL format' }
+    }
 
-    // 1. Check DB first
+    // 1. Check DB by DOMAIN (Protocol agnostic)
     const existing = await payload.find({
       collection: 'urls',
       where: {
-        url: {
-          equals: url,
+        domain: {
+          equals: domain,
         },
       },
     })
 
-    // 2. Fetch Dynamic Whitelist (SAFE URLs)
+    // 2. If it exists in DB, Return DB Data Immediately (Definitive source)
+    if (existing.docs.length > 0) {
+      const dbDoc = existing.docs[0]
+      return { 
+        result: {
+          url: dbDoc.url, // Original submission URL
+          domain: dbDoc.domain,
+          riskLevel: dbDoc.status,
+          trustScore: dbDoc.trust_score || 0,
+          flags: dbDoc.flags as string[] || [],
+          details: [`Record found in database. Consensus: ${dbDoc.status}`],
+          redirectChain: dbDoc.redirect_chain as string[] || []
+        } as CheckResult
+      }
+    }
+
+    // 3. For new URLs, perform Dynamic Whitelist & High Value Targets check
     const safeUrls = await payload.find({
       collection: 'urls',
-      where: {
-        status: {
-          equals: 'SAFE',
-        },
-      },
-      limit: 1000,
+      where: { status: { equals: 'SAFE' } },
+      limit: 1000, 
     })
+    
+    const dynamicWhitelist = [
+      ...TARGET_WHITELIST,
+      ...safeUrls.docs.map(doc => doc.domain)
+    ]
 
-    const dynamicWhitelist = [...TARGET_WHITELIST, ...safeUrls.docs.map((doc) => doc.domain)]
-
-    // 3. Fetch High Value Targets for Impersonation Check
     const brandTargetsReq = await payload.find({
       collection: 'high-value-targets',
       limit: 100,
@@ -57,60 +78,27 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     const brandTargets: BrandTarget[] = brandTargetsReq.docs.map((doc: any) => ({
       name: doc.name,
       official_domain: doc.official_domain,
-      variations: Array.isArray(doc.variations) ? doc.variations : [],
+      variations: Array.isArray(doc.variations) ? doc.variations : []
     }))
 
-    // 4. Always Run Engine (On-the-fly analysis)
+    // 4. Run Engine Analysis
     const analysis = await analyzeUrl(url, dynamicWhitelist, brandTargets)
 
-    // 5. Calculate Dynamic Trust Score
+    // 5. Final Range Normalization for Engine Result
     let finalTrust = analysis.trustScore
     let finalStatus = analysis.riskLevel
-    const dbFlags = existing.docs.length > 0 ? (existing.docs[0].flags as string[]) || [] : []
-    const combinedFlags = [...new Set([...analysis.flags, ...dbFlags])]
-
-    if (existing.docs.length > 0) {
-      const dbDoc = existing.docs[0]
-      // Base Score per Status
-      let baseScore = 60 // UNKNOWN/SUSPICIOUS default
-      if (dbDoc.status === 'SAFE') baseScore = 100
-      else if (dbDoc.status === 'MALICIOUS') baseScore = 20
-
-      // Crowd Decay: -1 point per report
-      const crowdPenalty = (dbDoc.reports_count || 0) * 1
-
-      const dbCalculatedScore = baseScore - crowdPenalty + (dbDoc.vote_score || 0)
-
-      if (analysis.trustScore < 50) {
-        finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
-      } else {
-        finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
-      }
-    }
-
-    // 6. Final Range Normalization
+    
     finalTrust = Math.max(0, Math.min(100, finalTrust))
-
     if (finalTrust >= 90) finalStatus = 'SAFE'
     else if (finalTrust >= 50) finalStatus = 'SUSPICIOUS'
     else finalStatus = 'MALICIOUS'
 
-    return {
+    return { 
       result: {
-        url: analysis.url,
-        domain: analysis.domain,
+        ...analysis,
         riskLevel: finalStatus,
-        trustScore: finalTrust,
-        flags: combinedFlags,
-        details:
-          existing.docs.length > 0
-            ? [
-                ...analysis.details,
-                `Historical record found: ${existing.docs[0].status} (${existing.docs[0].reports_count} reports)`,
-              ]
-            : analysis.details,
-        redirectChain: analysis.redirectChain,
-      } as CheckResult,
+        trustScore: finalTrust
+      } as CheckResult
     }
   } catch (error) {
     console.error('Error checking URL:', error)
@@ -121,6 +109,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
 export async function submitReportAction(prevState: any, formData: FormData) {
   const url = formData.get('url') as string
   const comment = formData.get('comment') as string
+  const intent = formData.get('status') as string
 
   if (!url) {
     return { error: 'URL is required.' }
@@ -155,8 +144,9 @@ export async function submitReportAction(prevState: any, formData: FormData) {
     const reportStatus = 'PENDING'
 
     // 2. Create Report
-    // We no longer link url_id here or update counts.
-    // The Admin will "Accept" the report, triggering the hook to update/create the URL record.
+    // We store the intent in the comment for the admin/hook to see
+    const finalComment = `[Intent: ${intent}] ${comment}`
+
     await payload.create({
       collection: 'reports',
       data: {
@@ -164,7 +154,7 @@ export async function submitReportAction(prevState: any, formData: FormData) {
         submitted_domain: domain,
         reporter_id: user.id,
         reporter_name: reporterName,
-        comment: comment,
+        comment: finalComment,
         status: reportStatus as any,
       },
     })

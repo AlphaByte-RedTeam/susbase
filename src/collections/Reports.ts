@@ -15,7 +15,7 @@ export const Reports: CollectionConfig = {
           if (!domain) return
 
           try {
-            // 1. Update URL stats
+            // 1. Find if URL exists by domain
             const existing = await payload.find({
               collection: 'urls',
               where: {
@@ -36,13 +36,24 @@ export const Reports: CollectionConfig = {
                 },
               })
             } else {
+              // 3. Create new if missing
+              // Determine status/score from intent in comment
+              const comment = doc.comment || ''
+              let initialStatus = 'MALICIOUS'
+              let initialScore = 20
+
+              if (comment.includes('[Intent: SAFE]')) {
+                initialStatus = 'SAFE'
+                initialScore = 100
+              }
+
               await payload.create({
                 collection: 'urls',
                 data: {
                   url: doc.submitted_url,
                   domain: domain,
-                  status: 'MALICIOUS', 
-                  trust_score: 20,
+                  status: initialStatus as any,
+                  trust_score: initialScore,
                   reports_count: 1,
                 },
               })
