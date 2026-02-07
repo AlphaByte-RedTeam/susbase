@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useActionState, useState } from 'react'
 import { checkUrlAction } from '@/app/(frontend)/actions'
 import { Button } from '@/components/ui/button'
@@ -37,18 +38,35 @@ type ActionState = {
 
 const initialState: ActionState = {}
 
-const urlSchema = z.string().min(1).refine((val) => {
-  // Very relaxed: check if it looks like a domain (has a dot) or starts with http
-  const lower = val.toLowerCase().trim()
-  if (lower.startsWith('http://') || lower.startsWith('https://')) return true
-  // Look for at least one dot with characters on both sides
-  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(lower)
-}, { message: 'Please enter a valid URL or domain' })
+const urlSchema = z
+  .url()
+  .min(1)
+  .refine(
+    (val) => {
+      // Very relaxed: check if it looks like a domain (has a dot) or starts with http
+      const lower = val.toLowerCase().trim()
+      if (lower.startsWith('http://') || lower.startsWith('https://')) return true
+      // Look for at least one dot with characters on both sides
+      return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(lower)
+    },
+    { message: 'Please enter a valid URL or domain' },
+  )
 
-export function CheckUrlForm() {
-  const [state, formAction, isPending] = useActionState(checkUrlAction, initialState)
-  const [url, setUrl] = useState('')
+export function CheckUrlForm({
+  initialUrl = '',
+  initialResult = initialState,
+}: {
+  initialUrl?: string
+  initialResult?: ActionState
+}) {
+  const [state, formAction, isPending] = useActionState(checkUrlAction, initialResult)
+  const [url, setUrl] = useState(initialUrl)
   const [clientError, setClientError] = useState<string | null>(null)
+
+  // Sync with initialUrl if it changes (Magic Entry)
+  useEffect(() => {
+    if (initialUrl) setUrl(initialUrl)
+  }, [initialUrl])
 
   const handleUrlChange = (val: string) => {
     // Keep original case in state if you want, but we'll validate/submit lowercased
@@ -58,7 +76,7 @@ export function CheckUrlForm() {
       setClientError(null)
       return
     }
-    
+
     const result = urlSchema.safeParse(trimmed)
     if (!result.success) {
       // Only show error if it doesn't look like it's being typed (e.g. has at least 3 chars)

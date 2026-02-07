@@ -91,24 +91,28 @@ Located in `src/lib/engine`. It performs purely logic-based checks before human 
 
 ## 5. Implementation Phases
 
-### Phase 1: Foundation
+### Phase 1: Foundation (COMPLETED)
 * Setup Next.js with JetBrains Mono & Tailwind.
 * Configure Supabase project.
 * Install PayloadCMS and connect to Supabase Postgres.
 * Setup Auth (Google/GitHub).
 
-### Phase 2: The Engine & Submission
+### Phase 2: The Engine & Submission (COMPLETED)
 * Build `SusEngine` logic (Typosquat check).
 * Create the "Submit -> Auth -> Save" flow in Next.js.
 * Build the Admin Dashboard in Payload to view incoming `URLs`.
 
-### Phase 3: Public UI
+### Phase 3: Public UI (COMPLETED)
 * Build the "Have I Been Pwned" style Landing Page.
 * Build the Result Page with risk visualization.
-* Build the Leaderboard.
-* Use @tabler/icons-react for icons.
-* Add theme toggle to implement theme switching functionality.
+* Build the Leaderboard and Safe URLs list.
+* Implement dynamic OG images and sitemaps.
 
-### Phase 4: Extension & API
+### Phase 4: Extension & API (IN PROGRESS)
 * Create a simple Chrome Extension that sends current tab URL to `/api/check`.
 * Open public API for wrappers.
+
+### Phase 5: Magic Entry (SaveFromNet style)
+* **Feature:** Allow users to check any URL by prepending `susbase.org/` to it.
+* **Example:** Navigating to `susbase.org/evil-site.com` or `susbase.org/http://phish-link.xyz` will automatically trigger a SusEngine analysis and lead the user to the report/result page.
+* **Implementation:** Use a Next.js catch-all route `[...url]` to capture the target domain, normalize it, and perform an instant check.
