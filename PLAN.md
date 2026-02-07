@@ -39,7 +39,7 @@
 * **Font:** JetBrains Mono (Global).
 * **Icons:** HugeIcons.
 * **UI Library:** Tailwind CSS + Shadcn UI.
-* **Theme:** "Lyra" / Minimalist Monospace (High contrast, "Terminal-lite" aesthetic).
+* **Theme:** ["Lyra" / Minimalist Monospace (High contrast, "Terminal-lite" aesthetic)] (https://ui.shadcn.com/create?style=lyra&iconLibrary=tabler&font=jetbrains-mono)
 * **Accessibility:** WCAG 2.1 AA compliant.
 * **Responsive Design:** Mobile-first approach with breakpoints for tablets and desktops.
 * **Performance:** Optimized for fast load times and smooth interactions.
