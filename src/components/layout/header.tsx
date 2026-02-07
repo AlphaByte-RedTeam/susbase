@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { User, LogOut } from 'lucide-react'
-import { IconBrandGithub } from '@tabler/icons-react'
 import { ModeToggle } from '@/components/ui/mode-toggle'
 import { Button } from '@/components/ui/button'
 import {
@@ -59,17 +58,8 @@ export function Header({ user }: { user: any }) {
       <div className="flex items-center gap-2 md:gap-4">
         {/* Desktop Nav Actions */}
         <nav className="hidden md:flex items-center gap-3 lg:gap-6 text-sm text-muted-foreground">
-          <Link
-            href="https://github.com/AlphaByte-RedTeam/susbase"
-            target="_blank"
-            className="hover:text-foreground transition-colors p-2"
-            aria-label="GitHub"
-          >
-            <IconBrandGithub className="w-5 h-5" />
-          </Link>
-          <div className="h-4 w-px bg-border/60 mx-1" />
           <ModeToggle />
-
+          
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

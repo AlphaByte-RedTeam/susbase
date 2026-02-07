@@ -10,7 +10,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ReportDialog } from '@/components/report-dialog-button'
-import { IconBrandGithub } from '@tabler/icons-react'
 
 interface MobileNavProps {
   user: any
@@ -81,15 +80,6 @@ export function MobileNav({ user }: MobileNavProps) {
               onClick={() => setOpen(false)}
             >
               How It Works
-            </Link>
-            <Link
-              href="https://github.com/AlphaByte-RedTeam/susbase"
-              target="_blank"
-              className="flex items-center gap-3 hover:text-primary transition-colors pb-2 border-b border-border/40"
-              onClick={() => setOpen(false)}
-            >
-              <IconBrandGithub className="w-4 h-4" />
-              GitHub
             </Link>
           </nav>
 

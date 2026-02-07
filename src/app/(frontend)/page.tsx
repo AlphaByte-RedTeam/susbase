@@ -3,6 +3,9 @@ import { CheckUrlForm } from '@/components/check-url-form'
 import { Header } from '@/components/layout/header'
 import { createClient } from '@/lib/supabase/server'
 
+import Link from 'next/link'
+import { IconBrandGithub } from '@tabler/icons-react'
+
 export default async function HomePage() {
   const supabase = await createClient()
   const {
@@ -58,9 +61,14 @@ export default async function HomePage() {
       {/* Footer */}
       <footer className="mt-20 py-8 text-xs text-muted-foreground border-t border-border/40 flex justify-between items-center">
         <p>© 2026 SUSBASE. MAKE THE INTERNET SAFER.</p>
-        <div className="flex gap-4 uppercase tracking-tighter">
-          <span>v1.0.0</span>
-        </div>
+        <Link
+          href="https://github.com/AlphaByte-RedTeam/susbase"
+          target="_blank"
+          className="hover:text-foreground transition-colors p-2"
+          aria-label="GitHub"
+        >
+          <IconBrandGithub className="w-5 h-5" />
+        </Link>
       </footer>
     </div>
   )
