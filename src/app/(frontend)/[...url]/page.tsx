@@ -18,14 +18,22 @@ export default async function MagicEntryPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Reconstruct the URL from catch-all parts
+  // We handle the case where protocols like https:/ might have lost a slash during routing
   let targetUrl = urlParts.join('/')
   
-  // Heuristic: If it doesn't look like a URL or domain, it's likely a 404
-  const isUrlLike = targetUrl.includes('.') || targetUrl.startsWith('http')
-  
-  if (!isUrlLike) {
+  // Fix double slash if it looks like a protocol was intended but collapsed
+  if (targetUrl.startsWith('http:/') && !targetUrl.startsWith('http://')) {
+    targetUrl = targetUrl.replace('http:/', 'http://')
+  } else if (targetUrl.startsWith('https:/') && !targetUrl.startsWith('https://')) {
+    targetUrl = targetUrl.replace('https:/', 'https://')
+  }
+
+  // XSS Prevention: Disallow HTML-related characters
+  if (targetUrl.includes('<') || targetUrl.includes('>') || targetUrl.includes('"') || targetUrl.includes("'")) {
     notFound()
   }
+
+  // Heuristic: If it doesn't look like a URL or domain, it's likely a 404
 
   // Basic normalization for the initial check
   if (!targetUrl.startsWith('http')) {
