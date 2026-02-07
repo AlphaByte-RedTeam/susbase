@@ -1,6 +1,6 @@
 import { levenshteinDistance } from './levenshtein'
 import { TARGET_WHITELIST, SUSPICIOUS_KEYWORDS, HIGH_RISK_TLDS, KNOWN_BLOCK_PAGES, BLOCK_PAGE_KEYWORDS } from './data'
-import { CheckResult, RiskLevel, BrandTarget } from './types'
+import type { CheckResult, RiskLevel, BrandTarget } from './types'
 import { getRedirectChain } from './redirects'
 
 export const analyzeUrl = async (

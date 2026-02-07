@@ -116,7 +116,7 @@ export default async function SubmissionsPage({
                     >
                       <TableCell className="py-6 font-mono">
                         <div className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-foreground truncate max-w-[150px] md:max-w-xs block">
+                          <span className="text-sm font-medium text-foreground truncate max-w-38 md:max-w-xs block">
                             {report.submitted_url || 'Unknown'}
                           </span>
                           <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">

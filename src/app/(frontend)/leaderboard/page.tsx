@@ -78,7 +78,7 @@ export default async function LeaderboardPage() {
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow className="hover:bg-transparent border-b-2">
-                  <TableHead className="w-[60px] text-center font-bold text-xs uppercase tracking-widest">
+                  <TableHead className="w-15 text-center font-bold text-xs uppercase tracking-widest">
                     Rank
                   </TableHead>
                   <TableHead className="uppercase tracking-widest text-xs font-normal">

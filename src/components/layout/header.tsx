@@ -73,7 +73,7 @@ export function Header({ user }: { user: any }) {
           >
             <IconBrandGithub className="w-5 h-5" />
           </Link>
-          <div className="h-4 w-[1px] bg-border/60 mx-1" />
+          <div className="h-4 w-px bg-border/60 mx-1" />
           <ModeToggle />
 
           {user ? (

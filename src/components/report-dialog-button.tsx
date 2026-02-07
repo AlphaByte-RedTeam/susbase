@@ -22,14 +22,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Loader2, Upload, X, Shield } from 'lucide-react'
-import { useForm, FieldApi } from '@tanstack/react-form'
-import { zodValidator } from '@tanstack/zod-form-adapter'
+import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { submitReportAction } from '@/app/(frontend)/actions'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
-function FieldInfo({ field }: { field: FieldApi<any, any, any, any> }) {
+function FieldInfo({ field }: { field: any }) {
   if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
 
   return (
@@ -62,7 +61,6 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
 
   const form = useForm({
-    validatorAdapter: zodValidator(),
     defaultValues: {
       url: defaultUrl || '',
       status: defaultIntent || 'MALICIOUS',
@@ -105,10 +103,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
     if (defaultIntent) form.setFieldValue('status', defaultIntent)
   }, [defaultUrl, defaultIntent, form])
 
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: FieldApi<any, any, any, any>,
-  ) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
     const file = e.target.files?.[0]
     if (file) {
       field.handleChange(file)
@@ -117,7 +112,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
     }
   }
 
-  const clearFile = (field: FieldApi<any, any, any, any>) => {
+  const clearFile = (field: any) => {
     field.handleChange(undefined)
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl)
@@ -138,7 +133,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono">
+      <DialogContent className="sm:max-w-125 rounded-none border-2 font-mono">
         <DialogHeader>
           <DialogTitle className="uppercase tracking-widest text-lg font-normal">
             {defaultIntent === 'SAFE'
@@ -165,7 +160,10 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
           <form.Field
             name="url"
             validators={{
-              onChange: reportSchema.shape.url,
+              onChange: ({ value }) => {
+                const res = reportSchema.shape.url.safeParse(value)
+                return res.success ? undefined : res.error.issues[0].message
+              },
             }}
           >
             {(field) => (
@@ -200,10 +198,13 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
                   >
                     Risk Level
                   </Label>
-                  <Select value={field.state.value} onValueChange={field.handleChange}>
+                  <Select
+                    value={field.state.value}
+                    onValueChange={(value) => field.handleChange(value as any)}
+                  >
                     <SelectTrigger className="w-full rounded-none border-input focus:ring-0 focus:border-primary font-mono text-sm uppercase">
                       <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
+                    </SelectTrigger>{' '}
                     <SelectContent className="rounded-none font-mono">
                       <SelectItem value="MALICIOUS" className="uppercase text-xs">
                         Malicious
@@ -228,7 +229,10 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
           <form.Field
             name="comment"
             validators={{
-              onChange: reportSchema.shape.comment,
+              onChange: ({ value }) => {
+                const res = reportSchema.shape.comment.safeParse(value)
+                return res.success ? undefined : res.error.issues[0].message
+              },
             }}
           >
             {(field) => (
@@ -249,7 +253,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  className="min-h-[100px] rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-xs uppercase placeholder:normal-case placeholder:text-muted-foreground/50"
+                  className="min-h-25 rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-xs uppercase placeholder:normal-case placeholder:text-muted-foreground/50"
                 />
                 <FieldInfo field={field} />
               </div>

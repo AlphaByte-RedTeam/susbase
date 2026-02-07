@@ -1,7 +1,7 @@
 'use server'
 
 import { analyzeUrl } from '@/lib/engine'
-import { CheckResult, BrandTarget } from '@/lib/engine/types'
+import type { CheckResult, BrandTarget } from '@/lib/engine/types'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { createClient } from '@/lib/supabase/server'

@@ -24,11 +24,14 @@ import {
 import Link from 'next/link'
 import { z } from 'zod'
 import { ReportDialog } from './report-dialog-button'
+import { CheckResult } from '@/lib/engine/types'
 
-const initialState = {
-  result: null,
-  error: null,
+type ActionState = {
+  result?: CheckResult
+  error?: string
 }
+
+const initialState: ActionState = {}
 
 const urlSchema = z
   .string()
@@ -204,7 +207,7 @@ export function CheckUrlForm() {
                 )}
               </CardContent>
               <CardFooter className="justify-between border-t p-6 gap-4 items-center flex-wrap sm:flex-nowrap">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest max-w-[200px]">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest max-w-50">
                   Automated estimation. Verify manually.
                 </p>
                 <div className="flex gap-2 w-full sm:w-auto">

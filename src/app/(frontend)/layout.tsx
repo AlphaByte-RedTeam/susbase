@@ -1,9 +1,9 @@
-import React from 'react'
+import type React from 'react'
 import './styles.css'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from 'next-themes'
 import { JetBrains_Mono } from 'next/font/google'
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
