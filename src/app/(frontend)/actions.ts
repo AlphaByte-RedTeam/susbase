@@ -47,25 +47,22 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     const hvtCheck = await payload.find({
       collection: 'high-value-targets',
       where: {
-        official_domain: {
-          equals: domain,
-        },
+        or: [
+          {
+            official_domain: {
+              equals: domain,
+            },
+          },
+          {
+            'variations.domain': {
+              equals: domain,
+            },
+          },
+        ],
       },
     })
     
-    // Also check variations for HVT
-    let isHvt = hvtCheck.docs.length > 0
-    if (!isHvt) {
-      const hvtVariations = await payload.find({
-        collection: 'high-value-targets',
-        where: {
-          variations: {
-            contains: domain,
-          },
-        },
-      })
-      isHvt = hvtVariations.docs.length > 0
-    }
+    const isHvt = hvtCheck.docs.length > 0
 
     // 3. If it exists in DB, Return DB Data Immediately (Definitive source)
     if (existing.docs.length > 0) {
@@ -104,7 +101,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     const brandTargets: BrandTarget[] = brandTargetsReq.docs.map((doc: any) => ({
       name: doc.name,
       official_domain: doc.official_domain,
-      variations: Array.isArray(doc.variations) ? doc.variations : []
+      variations: doc.variations?.map((v: any) => v.domain) || []
     }))
 
     // 5. Run Engine Analysis

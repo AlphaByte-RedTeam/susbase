@@ -238,12 +238,9 @@ export interface HighValueTarget {
   official_domain: string;
   variations?:
     | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+        domain: string;
+        id?: string | null;
+      }[]
     | null;
   updatedAt: string;
   createdAt: string;
@@ -415,7 +412,12 @@ export interface ReportsSelect<T extends boolean = true> {
 export interface HighValueTargetsSelect<T extends boolean = true> {
   name?: T;
   official_domain?: T;
-  variations?: T;
+  variations?:
+    | T
+    | {
+        domain?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

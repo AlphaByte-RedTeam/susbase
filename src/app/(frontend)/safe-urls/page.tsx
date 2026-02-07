@@ -94,12 +94,12 @@ export default async function SafeUrlsPage() {
                 </div>
                 {brand.variations && brand.variations.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-border/40 flex flex-wrap gap-2 relative z-10">
-                    {brand.variations.map((v: string) => (
+                    {brand.variations.map((v: any) => (
                       <span
-                        key={v}
+                        key={v.id}
                         className="text-[10px] uppercase text-muted-foreground font-mono bg-muted px-1.5 py-0.5 border"
                       >
-                        {v}
+                        {v.domain}
                       </span>
                     ))}
                   </div>

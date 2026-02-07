@@ -19,7 +19,14 @@ export const HighValueTargets: CollectionConfig = {
     },
     {
       name: 'variations',
-      type: 'json', // Known safe subdomains or variations
+      type: 'array',
+      fields: [
+        {
+          name: 'domain',
+          type: 'text',
+          required: true,
+        },
+      ],
     },
   ],
 }
