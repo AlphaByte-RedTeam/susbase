@@ -146,7 +146,7 @@ export function MobileNav({ user }: MobileNavProps) {
                   asChild
                   onClick={() => setOpen(false)}
                 >
-                  <Link href="/login">Login / Sign Up</Link>
+                  <Link href="/login">Login</Link>
                 </Button>
               )}
             </div>
