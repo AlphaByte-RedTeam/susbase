@@ -71,7 +71,10 @@ export const analyzeUrl = async (
        }
     }
   } catch (e) {
-    // details.push('Site is unreachable.')
+    // Flag connection errors (Privacy errors, SSL issues, or down)
+    trustScore -= 15
+    flags.push('connection_unstable')
+    details.push('Could not establish a secure connection to the site (SSL or Timeout).')
   }
 
   // Check for Block Pages in chain (Network Level)
