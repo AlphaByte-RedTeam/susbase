@@ -333,7 +333,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono p-0 overflow-hidden flex flex-col max-h-[90vh]">
+      <DialogContent className="sm:max-w-125 rounded-none border-2 font-mono p-0 overflow-hidden flex flex-col max-h-[90vh]">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="uppercase tracking-widest text-lg font-normal">
             {title}
