@@ -10,15 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,13 +22,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Loader2, Upload, X, Shield } from 'lucide-react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { submitReportAction } from '@/app/(frontend)/actions'
 import { toast } from 'sonner'
 import Image from 'next/image'
-import { useIsMobile } from '@/hooks/use-mobile'
 
 function FieldInfo({ field }: { field: any }) {
   if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
@@ -71,7 +62,6 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
   const [open, setOpen] = React.useState(false)
   const [isPending, setIsPending] = React.useState(false)
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
-  const isMobile = useIsMobile()
 
   const form = useForm({
     defaultValues: {
@@ -326,16 +316,6 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           SUBMIT REPORT
         </Button>
-        {isMobile && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOpen(false)}
-            className="w-full rounded-none uppercase tracking-widest text-sm h-12"
-          >
-            Cancel
-          </Button>
-        )}
       </div>
     </form>
   )
@@ -350,36 +330,11 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
     </Button>
   )
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          {triggerButton}
-        </DrawerTrigger>
-        <DrawerContent className="rounded-none font-mono max-h-[95vh]">
-          <div className="overflow-y-auto px-6 pb-10">
-            <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="uppercase tracking-widest text-lg font-normal text-left">
-                {title}
-              </DrawerTitle>
-              <DrawerDescription className="text-xs uppercase tracking-tight text-muted-foreground text-left">
-                {description}
-              </DrawerDescription>
-            </DrawerHeader>
-            {formContent}
-          </div>
-        </DrawerContent>
-      </Drawer>
-    )
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {triggerButton}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono p-0 overflow-hidden flex flex-col max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle className="uppercase tracking-widest text-lg font-normal">
             {title}
           </DialogTitle>
@@ -387,7 +342,9 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
             {description}
           </DialogDescription>
         </DialogHeader>
-        {formContent}
+        <ScrollArea className="flex-1 p-6 pt-0">
+          {formContent}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   )

@@ -8,8 +8,8 @@ export const analyzeUrl = async (
   customWhitelist: string[] = [], 
   brandTargets: BrandTarget[] = []
 ): Promise<CheckResult> => {
-  let url = inputUrl
-  if (!url.startsWith('http')) {
+  let url = inputUrl.trim().toLowerCase()
+  if (!/^https?:\/\//i.test(url)) {
     url = 'https://' + url
   }
 
@@ -21,7 +21,7 @@ export const analyzeUrl = async (
   let domain = ''
   try {
     const urlObj = new URL(finalUrl)
-    domain = urlObj.hostname.toLowerCase()
+    domain = urlObj.hostname
   } catch (e) {
     return {
       url: inputUrl,

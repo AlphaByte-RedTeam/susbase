@@ -37,12 +37,13 @@ type ActionState = {
 
 const initialState: ActionState = {}
 
-const urlSchema = z
-  .string()
-  .url()
-  .refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
-    message: 'URL must start with http:// or https://',
-  })
+const urlSchema = z.string().min(1).refine((val) => {
+  // Very relaxed: check if it looks like a domain (has a dot) or starts with http
+  const lower = val.toLowerCase().trim()
+  if (lower.startsWith('http://') || lower.startsWith('https://')) return true
+  // Look for at least one dot with characters on both sides
+  return /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(lower)
+}, { message: 'Please enter a valid URL or domain' })
 
 export function CheckUrlForm() {
   const [state, formAction, isPending] = useActionState(checkUrlAction, initialState)
@@ -50,14 +51,22 @@ export function CheckUrlForm() {
   const [clientError, setClientError] = useState<string | null>(null)
 
   const handleUrlChange = (val: string) => {
+    // Keep original case in state if you want, but we'll validate/submit lowercased
     setUrl(val)
-    if (!val) {
+    const trimmed = val.trim()
+    if (!trimmed) {
       setClientError(null)
       return
     }
-    const result = urlSchema.safeParse(val)
+    
+    const result = urlSchema.safeParse(trimmed)
     if (!result.success) {
-      setClientError(result.error.issues[0].message)
+      // Only show error if it doesn't look like it's being typed (e.g. has at least 3 chars)
+      if (trimmed.length > 3 && !trimmed.includes('.')) {
+        setClientError('Please enter a valid URL or domain')
+      } else {
+        setClientError(null)
+      }
     } else {
       setClientError(null)
     }

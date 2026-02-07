@@ -9,29 +9,39 @@ import { TARGET_WHITELIST } from '@/lib/engine/data'
 import { z } from 'zod'
 
 export async function checkUrlAction(prevState: any, formData: FormData) {
-  const url = formData.get('url') as string
-  
-  // Zod Validation
-  const urlSchema = z.string().url().refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
-    message: "URL must start with http:// or https://"
-  })
+  let rawUrl = (formData.get('url') as string)?.trim()
+  if (!rawUrl) return { error: 'URL is required' }
 
-  const validation = urlSchema.safeParse(url)
-  if (!validation.success) {
-    return { error: validation.error.issues[0].message }
+  // Normalize: handle cases like "GOOGLE.COM" or "google.com"
+  let url = rawUrl.toLowerCase()
+
+  // If it's just a domain like google.com, add the protocol for parsing
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url
   }
 
   try {
     const payload = await getPayload({ config })
-    
-    // Normalize: Extract domain strictly
+
+    // Extract domain strictly for DB lookups
     let domain = ''
     try {
       const urlObj = new URL(url)
-      domain = urlObj.hostname.toLowerCase()
+      domain = urlObj.hostname.replace(/^www\./, '')
+      // Fallback if hostname is empty (e.g. invalid input that somehow passed)
+      if (!domain && url.includes('.')) {
+        domain = url.split('/')[2]?.replace(/^www\./, '') || ''
+      }
     } catch (e) {
-      return { error: 'Invalid URL format' }
+      // Manual fallback for very simple domain strings if URL parsing fails
+      if (rawUrl.includes('.') && !rawUrl.includes('/')) {
+        domain = rawUrl.toLowerCase().replace(/^www\./, '')
+      } else {
+        return { error: 'Invalid URL or domain format' }
+      }
     }
+
+    if (!domain) return { error: 'Could not resolve domain name' }
 
     // 1. Check DB by DOMAIN (Protocol agnostic)
     const existing = await payload.find({
@@ -61,24 +71,24 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
         ],
       },
     })
-    
+
     const isHvt = hvtCheck.docs.length > 0
 
     // 3. If it exists in DB, Return DB Data Immediately (Definitive source)
     if (existing.docs.length > 0) {
       const dbDoc = existing.docs[0]
-      return { 
+      return {
         result: {
           url: dbDoc.url, // Original submission URL
           domain: dbDoc.domain,
           riskLevel: dbDoc.status,
           trustScore: dbDoc.trust_score || 0,
-          flags: dbDoc.flags as string[] || [],
+          flags: (dbDoc.flags as string[]) || [],
           details: [`Record found in database. Consensus: ${dbDoc.status}`],
-          redirectChain: dbDoc.redirect_chain as string[] || [],
+          redirectChain: (dbDoc.redirect_chain as string[]) || [],
           isHighTarget: isHvt,
-          isVerified: dbDoc.status === 'SAFE' || isHvt
-        } as CheckResult
+          isVerified: dbDoc.status === 'SAFE' || isHvt,
+        } as CheckResult,
       }
     }
 
@@ -86,13 +96,10 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     const safeUrls = await payload.find({
       collection: 'urls',
       where: { status: { equals: 'SAFE' } },
-      limit: 1000, 
+      limit: 1000,
     })
-    
-    const dynamicWhitelist = [
-      ...TARGET_WHITELIST,
-      ...safeUrls.docs.map(doc => doc.domain)
-    ]
+
+    const dynamicWhitelist = [...TARGET_WHITELIST, ...safeUrls.docs.map((doc) => doc.domain)]
 
     const brandTargetsReq = await payload.find({
       collection: 'high-value-targets',
@@ -101,7 +108,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     const brandTargets: BrandTarget[] = brandTargetsReq.docs.map((doc: any) => ({
       name: doc.name,
       official_domain: doc.official_domain,
-      variations: doc.variations?.map((v: any) => v.domain) || []
+      variations: doc.variations?.map((v: any) => v.domain) || [],
     }))
 
     // 5. Run Engine Analysis
@@ -110,20 +117,20 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     // 6. Final Range Normalization for Engine Result
     let finalTrust = analysis.trustScore
     let finalStatus = analysis.riskLevel
-    
+
     finalTrust = Math.max(0, Math.min(100, finalTrust))
     if (finalTrust >= 90) finalStatus = 'SAFE'
     else if (finalTrust >= 50) finalStatus = 'SUSPICIOUS'
     else finalStatus = 'MALICIOUS'
 
-    return { 
+    return {
       result: {
         ...analysis,
         riskLevel: finalStatus,
         trustScore: finalTrust,
         isHighTarget: isHvt,
-        isVerified: finalStatus === 'SAFE' || isHvt
-      } as CheckResult
+        isVerified: finalStatus === 'SAFE' || isHvt,
+      } as CheckResult,
     }
   } catch (error) {
     console.error('Error checking URL:', error)
