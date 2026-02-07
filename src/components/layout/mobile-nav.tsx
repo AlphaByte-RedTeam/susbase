@@ -69,6 +69,13 @@ export function MobileNav({ user }: MobileNavProps) {
               Submissions
             </Link>
             <Link
+              href="/safe-urls"
+              className="flex items-center gap-3 hover:text-primary transition-colors pb-2 border-b border-border/40"
+              onClick={() => setOpen(false)}
+            >
+              Safe URLs
+            </Link>
+            <Link
               href="/how-it-works"
               className="flex items-center gap-3 hover:text-primary transition-colors pb-2 border-b border-border/40"
               onClick={() => setOpen(false)}

@@ -40,26 +40,20 @@ export function Header({ user }: { user: any }) {
             className="dark:invert w-28 md:w-36"
           />
         </Link>
-        <nav className="hidden lg:flex gap-8 text-sm items-center text-muted-foreground font-medium uppercase tracking-wider">
-          <Link
-            href="/leaderboard"
-            className="hover:text-foreground transition-colors whitespace-nowrap"
-          >
-            Leaderboard
-          </Link>
-          <Link
-            href="/submissions"
-            className="hover:text-foreground transition-colors whitespace-nowrap"
-          >
-            Submissions
-          </Link>
-          <Link
-            href="/how-it-works"
-            className="hover:text-foreground transition-colors whitespace-nowrap"
-          >
-            How It Works
-          </Link>
-        </nav>
+                <nav className="hidden lg:flex gap-8 text-sm items-center text-muted-foreground font-medium uppercase tracking-wider">
+                  <Link href="/leaderboard" className="hover:text-foreground transition-colors whitespace-nowrap">
+                    Leaderboard
+                  </Link>
+                  <Link href="/submissions" className="hover:text-foreground transition-colors whitespace-nowrap">
+                    Submissions
+                  </Link>
+                  <Link href="/safe-urls" className="hover:text-foreground transition-colors whitespace-nowrap">
+                    Safe URLs
+                  </Link>
+                  <Link href="/how-it-works" className="hover:text-foreground transition-colors whitespace-nowrap">
+                    How It Works
+                  </Link>
+                </nav>
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
