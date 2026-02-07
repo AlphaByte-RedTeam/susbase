@@ -10,6 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +37,7 @@ import { z } from 'zod'
 import { submitReportAction } from '@/app/(frontend)/actions'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 function FieldInfo({ field }: { field: any }) {
   if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
@@ -61,6 +71,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
   const [open, setOpen] = React.useState(false)
   const [isPending, setIsPending] = React.useState(false)
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
+  const isMobile = useIsMobile()
 
   const form = useForm({
     defaultValues: {
@@ -124,217 +135,259 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
     }
   }
 
+  const title = defaultIntent === 'SAFE'
+    ? 'Vouch Safe Site'
+    : defaultIntent === 'MALICIOUS'
+      ? 'Report Malicious Site'
+      : 'Contribute to SusBase'
+
+  const description = defaultIntent === 'SAFE'
+    ? 'Verify this domain is legitimate to help our whitelist.'
+    : 'Submit evidence of phishing, malware, or scams.'
+
+  const formContent = (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        form.handleSubmit()
+      }}
+      className="space-y-6 pt-4"
+    >
+      <form.Field
+        name="url"
+        validators={{
+          onChange: ({ value }) => {
+            const res = reportSchema.shape.url.safeParse(value)
+            return res.success ? undefined : res.error.issues[0].message
+          },
+        }}
+      >
+        {(field) => (
+          <div className="space-y-2">
+            <Label
+              htmlFor={field.name}
+              className="uppercase tracking-widest text-[10px] text-muted-foreground"
+            >
+              Target URL
+            </Label>
+            <Input
+              id={field.name}
+              placeholder="https://example.com"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              className="rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-sm"
+              readOnly={!!defaultUrl}
+            />
+            <FieldInfo field={field} />
+          </div>
+        )}
+      </form.Field>
+
+      {!defaultIntent && (
+        <form.Field name="status">
+          {(field) => (
+            <div className="space-y-2">
+              <Label
+                htmlFor={field.name}
+                className="uppercase tracking-widest text-[10px] text-muted-foreground"
+              >
+                Risk Level
+              </Label>
+              <Select
+                value={field.state.value}
+                onValueChange={(value) => field.handleChange(value as any)}
+              >
+                <SelectTrigger className="w-full rounded-none border-input focus:ring-0 focus:border-primary font-mono text-sm uppercase">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-none font-mono">
+                  <SelectItem value="MALICIOUS" className="uppercase text-xs">
+                    Malicious
+                  </SelectItem>
+                  <SelectItem value="SUSPICIOUS" className="uppercase text-xs">
+                    Suspicious
+                  </SelectItem>
+                  <SelectItem value="SAFE" className="uppercase text-xs">
+                    Safe
+                  </SelectItem>
+                  <SelectItem value="UNKNOWN" className="uppercase text-xs">
+                    Unknown
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FieldInfo field={field} />
+            </div>
+          )}
+        </form.Field>
+      )}
+
+      <form.Field name="is_high_target">
+        {(field) => (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={field.name}
+              checked={field.state.value}
+              onCheckedChange={(checked) => field.handleChange(!!checked)}
+              className="rounded-none border-border"
+            />
+            <Label
+              htmlFor={field.name}
+              className="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer"
+            >
+              Is High Target?
+            </Label>
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field
+        name="comment"
+        validators={{
+          onChange: ({ value }) => {
+            const res = reportSchema.shape.comment.safeParse(value)
+            return res.success ? undefined : res.error.issues[0].message
+          },
+        }}
+      >
+        {(field) => (
+          <div className="space-y-2">
+            <Label
+              htmlFor={field.name}
+              className="uppercase tracking-widest text-[10px] text-muted-foreground"
+            >
+              Observation / Reason
+            </Label>
+            <Textarea
+              id={field.name}
+              placeholder={
+                defaultIntent === 'SAFE'
+                  ? 'WHY IS THIS SITE SAFE? (E.G. OFFICIAL BANK LOGIN)...'
+                  : 'DESCRIBE THE THREAT (E.G. PHISHING, FAKE LOGIN)...'
+              }
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              className="min-h-25 rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-xs uppercase placeholder:normal-case placeholder:text-muted-foreground/50"
+            />
+            <FieldInfo field={field} />
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="screenshot">
+        {(field) => (
+          <div className="space-y-2">
+            <Label className="uppercase tracking-widest text-[10px] text-muted-foreground">
+              Evidence (Screenshot)
+            </Label>
+
+            {!previewUrl ? (
+              <div className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors p-6 flex flex-col items-center justify-center gap-2 cursor-pointer relative group">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, field)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Click to upload image
+                </span>
+              </div>
+            ) : (
+              <div className="relative border border-border mt-2 group">
+                <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                  <Image src={previewUrl} alt="Preview" fill className="object-contain" />
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6 rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => clearFile(field)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            <FieldInfo field={field} />
+          </div>
+        )}
+      </form.Field>
+
+      <div className="pt-4 flex flex-col gap-2">
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="w-full rounded-none uppercase tracking-widest text-sm h-12"
+        >
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          SUBMIT REPORT
+        </Button>
+        {isMobile && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="w-full rounded-none uppercase tracking-widest text-sm h-12"
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
+    </form>
+  )
+
+  const triggerButton = trigger || (
+    <Button
+      variant="outline"
+      className="rounded-none uppercase tracking-widest text-xs h-9 px-4 gap-2"
+    >
+      <Shield className="w-4 h-4" />
+      Submit URL
+    </Button>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>
+          {triggerButton}
+        </DrawerTrigger>
+        <DrawerContent className="rounded-none font-mono max-h-[95vh]">
+          <div className="overflow-y-auto px-6 pb-10">
+            <DrawerHeader className="px-0 text-left">
+              <DrawerTitle className="uppercase tracking-widest text-lg font-normal text-left">
+                {title}
+              </DrawerTitle>
+              <DrawerDescription className="text-xs uppercase tracking-tight text-muted-foreground text-left">
+                {description}
+              </DrawerDescription>
+            </DrawerHeader>
+            {formContent}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || (
-          <Button
-            variant="outline"
-            className="rounded-none uppercase tracking-widest text-xs h-9 px-4 gap-2"
-          >
-            <Shield className="w-4 h-4" />
-            Submit URL
-          </Button>
-        )}
+        {triggerButton}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono">
+      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="uppercase tracking-widest text-lg font-normal">
-            {defaultIntent === 'SAFE'
-              ? 'Vouch Safe Site'
-              : defaultIntent === 'MALICIOUS'
-                ? 'Report Malicious Site'
-                : 'Contribute to SusBase'}
+            {title}
           </DialogTitle>
           <DialogDescription className="text-xs uppercase tracking-tight text-muted-foreground">
-            {defaultIntent === 'SAFE'
-              ? 'Verify this domain is legitimate to help our whitelist.'
-              : 'Submit evidence of phishing, malware, or scams.'}
+            {description}
           </DialogDescription>
         </DialogHeader>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            form.handleSubmit()
-          }}
-          className="space-y-6 pt-4"
-        >
-          <form.Field
-            name="url"
-            validators={{
-              onChange: ({ value }) => {
-                const res = reportSchema.shape.url.safeParse(value)
-                return res.success ? undefined : res.error.issues[0].message
-              },
-            }}
-          >
-            {(field) => (
-              <div className="space-y-2">
-                <Label
-                  htmlFor={field.name}
-                  className="uppercase tracking-widest text-[10px] text-muted-foreground"
-                >
-                  Target URL
-                </Label>
-                <Input
-                  id={field.name}
-                  placeholder="https://example.com"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  className="rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-sm"
-                  readOnly={!!defaultUrl}
-                />
-                <FieldInfo field={field} />
-              </div>
-            )}
-          </form.Field>
-
-          {!defaultIntent && (
-            <form.Field name="status">
-              {(field) => (
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={field.name}
-                    className="uppercase tracking-widest text-[10px] text-muted-foreground"
-                  >
-                    Risk Level
-                  </Label>
-                  <Select
-                    value={field.state.value}
-                    onValueChange={(value) => field.handleChange(value as any)}
-                  >
-                    <SelectTrigger className="w-full rounded-none border-input focus:ring-0 focus:border-primary font-mono text-sm uppercase">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-none font-mono">
-                      <SelectItem value="MALICIOUS" className="uppercase text-xs">
-                        Malicious
-                      </SelectItem>
-                      <SelectItem value="SUSPICIOUS" className="uppercase text-xs">
-                        Suspicious
-                      </SelectItem>
-                      <SelectItem value="SAFE" className="uppercase text-xs">
-                        Safe
-                      </SelectItem>
-                      <SelectItem value="UNKNOWN" className="uppercase text-xs">
-                        Unknown
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FieldInfo field={field} />
-                </div>
-              )}
-            </form.Field>
-          )}
-
-          <form.Field name="is_high_target">
-            {(field) => (
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={field.name}
-                  checked={field.state.value}
-                  onCheckedChange={(checked) => field.handleChange(!!checked)}
-                  className="rounded-none border-border"
-                />
-                <Label
-                  htmlFor={field.name}
-                  className="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer"
-                >
-                  Is High Target?
-                </Label>
-              </div>
-            )}
-          </form.Field>
-
-          <form.Field
-            name="comment"
-            validators={{
-              onChange: ({ value }) => {
-                const res = reportSchema.shape.comment.safeParse(value)
-                return res.success ? undefined : res.error.issues[0].message
-              },
-            }}
-          >
-            {(field) => (
-              <div className="space-y-2">
-                <Label
-                  htmlFor={field.name}
-                  className="uppercase tracking-widest text-[10px] text-muted-foreground"
-                >
-                  Observation / Reason
-                </Label>
-                <Textarea
-                  id={field.name}
-                  placeholder={
-                    defaultIntent === 'SAFE'
-                      ? 'WHY IS THIS SITE SAFE? (E.G. OFFICIAL BANK LOGIN)...'
-                      : 'DESCRIBE THE THREAT (E.G. PHISHING, FAKE LOGIN)...'
-                  }
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  className="min-h-25 rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-xs uppercase placeholder:normal-case placeholder:text-muted-foreground/50"
-                />
-                <FieldInfo field={field} />
-              </div>
-            )}
-          </form.Field>
-
-          <form.Field name="screenshot">
-            {(field) => (
-              <div className="space-y-2">
-                <Label className="uppercase tracking-widest text-[10px] text-muted-foreground">
-                  Evidence (Screenshot)
-                </Label>
-
-                {!previewUrl ? (
-                  <div className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 transition-colors p-6 flex flex-col items-center justify-center gap-2 cursor-pointer relative group">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileChange(e, field)}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                      Click to upload image
-                    </span>
-                  </div>
-                ) : (
-                  <div className="relative border border-border mt-2 group">
-                    <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                      <Image src={previewUrl} alt="Preview" fill className="object-contain" />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-6 w-6 rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => clearFile(field)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                <FieldInfo field={field} />
-              </div>
-            )}
-          </form.Field>
-
-          <DialogFooter className="pt-4">
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="w-full rounded-none uppercase tracking-widest text-sm h-12"
-            >
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              SUBMIT REPORT
-            </Button>
-          </DialogFooter>
-        </form>
+        {formContent}
       </DialogContent>
     </Dialog>
   )
