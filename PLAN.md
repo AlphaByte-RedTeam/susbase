@@ -91,6 +91,8 @@ Located in `src/lib/engine`. It performs purely logic-based checks before human 
 * Build the "Have I Been Pwned" style Landing Page.
 * Build the Result Page with risk visualization.
 * Build the Leaderboard.
+* Use @tabler/icons-react for icons.
+* Add theme toggle to implement theme switching functionality.
 
 ### Phase 4: Extension & API
 * Create a simple Chrome Extension that sends current tab URL to `/api/check`.
