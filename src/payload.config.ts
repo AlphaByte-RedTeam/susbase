@@ -28,6 +28,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
     },
+    schemaName: process.env.DB_SCHEMA,
+    idType: 'uuid',
   }),
   sharp,
   plugins: [],
