@@ -3,6 +3,7 @@ import './styles.css'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from 'next-themes'
 import { JetBrains_Mono } from 'next/font/google'
+import { Metadata } from 'next'
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
@@ -15,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
   fallback: ['monospace'],
 })
 
-export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+export const metadata: Metadata = {
+  description: 'A crowd-sourced url safety layer to make internet safer',
+  title: 'Susbase | The Crowd-Sourced Link Safety Layer',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
