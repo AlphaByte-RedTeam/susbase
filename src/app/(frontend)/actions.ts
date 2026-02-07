@@ -9,7 +9,7 @@ import { TARGET_WHITELIST } from '@/lib/engine/data'
 import { z } from 'zod'
 
 export async function checkUrlAction(prevState: any, formData: FormData) {
-  let rawUrl = (formData.get('url') as string)?.trim()
+  const rawUrl = (formData.get('url') as string)?.trim()
   if (!rawUrl) return { error: 'URL is required' }
 
   // Normalize: handle cases like "GOOGLE.COM" or "google.com"
