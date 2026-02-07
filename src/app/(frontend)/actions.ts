@@ -43,7 +43,31 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
       },
     })
 
-    // 2. If it exists in DB, Return DB Data Immediately (Definitive source)
+    // 2. Fetch High Value Target info for flags
+    const hvtCheck = await payload.find({
+      collection: 'high-value-targets',
+      where: {
+        official_domain: {
+          equals: domain,
+        },
+      },
+    })
+    
+    // Also check variations for HVT
+    let isHvt = hvtCheck.docs.length > 0
+    if (!isHvt) {
+      const hvtVariations = await payload.find({
+        collection: 'high-value-targets',
+        where: {
+          variations: {
+            contains: domain,
+          },
+        },
+      })
+      isHvt = hvtVariations.docs.length > 0
+    }
+
+    // 3. If it exists in DB, Return DB Data Immediately (Definitive source)
     if (existing.docs.length > 0) {
       const dbDoc = existing.docs[0]
       return { 
@@ -54,12 +78,14 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
           trustScore: dbDoc.trust_score || 0,
           flags: dbDoc.flags as string[] || [],
           details: [`Record found in database. Consensus: ${dbDoc.status}`],
-          redirectChain: dbDoc.redirect_chain as string[] || []
+          redirectChain: dbDoc.redirect_chain as string[] || [],
+          isHighTarget: isHvt,
+          isVerified: dbDoc.status === 'SAFE' || isHvt
         } as CheckResult
       }
     }
 
-    // 3. For new URLs, perform Dynamic Whitelist & High Value Targets check
+    // 4. For new URLs, perform Dynamic Whitelist & High Value Targets check
     const safeUrls = await payload.find({
       collection: 'urls',
       where: { status: { equals: 'SAFE' } },
@@ -81,10 +107,10 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
       variations: Array.isArray(doc.variations) ? doc.variations : []
     }))
 
-    // 4. Run Engine Analysis
+    // 5. Run Engine Analysis
     const analysis = await analyzeUrl(url, dynamicWhitelist, brandTargets)
 
-    // 5. Final Range Normalization for Engine Result
+    // 6. Final Range Normalization for Engine Result
     let finalTrust = analysis.trustScore
     let finalStatus = analysis.riskLevel
     
@@ -97,7 +123,9 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
       result: {
         ...analysis,
         riskLevel: finalStatus,
-        trustScore: finalTrust
+        trustScore: finalTrust,
+        isHighTarget: isHvt,
+        isVerified: finalStatus === 'SAFE' || isHvt
       } as CheckResult
     }
   } catch (error) {

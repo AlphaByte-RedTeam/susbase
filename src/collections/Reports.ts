@@ -75,7 +75,7 @@ export const Reports: CollectionConfig = {
                 const nameBase = domain.split('.')[0]
                 const formattedName = nameBase
                   .split('-')
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
                   .join(' ')
 
                 await payload.create({

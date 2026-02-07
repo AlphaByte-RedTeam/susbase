@@ -168,19 +168,19 @@ function RiskBadge({ level }: { level: string }) {
   switch (level) {
     case 'SAFE':
       return (
-        <span className="text-[10px] text-green-500 flex items-center gap-1 uppercase tracking-widest">
+        <span className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1 uppercase tracking-widest">
           <ShieldCheck className="w-3 h-3" /> Safe
         </span>
       )
     case 'SUSPICIOUS':
       return (
-        <span className="text-[10px] text-yellow-500 flex items-center gap-1 uppercase tracking-widest">
+        <span className="text-[10px] text-yellow-600 dark:text-yellow-400 flex items-center gap-1 uppercase tracking-widest">
           <ShieldAlert className="w-3 h-3" /> Sus
         </span>
       )
     case 'MALICIOUS':
       return (
-        <span className="text-[10px] text-red-500 flex items-center gap-1 uppercase tracking-widest">
+        <span className="text-[10px] text-red-600 dark:text-red-400 flex items-center gap-1 uppercase tracking-widest">
           <ShieldX className="w-3 h-3" /> Malicious
         </span>
       )
@@ -199,7 +199,7 @@ function SubmissionStatusBadge({ status }: { status: string }) {
       return (
         <Badge
           variant="outline"
-          className="rounded-none border-green-500/30 bg-green-500/5 text-green-600 text-[10px] uppercase tracking-widest px-2 py-0.5"
+          className="rounded-none border-green-500/60 bg-green-500/5 text-green-600 dark:text-green-400 text-[10px] uppercase tracking-widest px-2 py-0.5"
         >
           <CheckCircle2 className="w-3 h-3 mr-1" /> Accepted
         </Badge>
@@ -208,7 +208,7 @@ function SubmissionStatusBadge({ status }: { status: string }) {
       return (
         <Badge
           variant="outline"
-          className="rounded-none border-red-500/30 bg-red-500/5 text-red-600 text-[10px] uppercase tracking-widest px-2 py-0.5"
+          className="rounded-none border-red-500/60 bg-red-500/5 text-red-600 dark:text-red-400 text-[10px] uppercase tracking-widest px-2 py-0.5"
         >
           <CircleX className="w-3 h-3 mr-1" /> Rejected
         </Badge>
@@ -217,7 +217,7 @@ function SubmissionStatusBadge({ status }: { status: string }) {
       return (
         <Badge
           variant="outline"
-          className="rounded-none border-muted-foreground/30 bg-muted/20 text-muted-foreground text-[10px] uppercase tracking-widest px-2 py-0.5"
+          className="rounded-none border-muted-foreground/60 bg-muted/20 text-muted-foreground text-[10px] uppercase tracking-widest px-2 py-0.5"
         >
           <Timer className="w-3 h-3 mr-1" /> Pending
         </Badge>

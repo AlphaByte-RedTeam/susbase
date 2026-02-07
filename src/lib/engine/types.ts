@@ -8,6 +8,8 @@ export interface CheckResult {
   flags: string[]
   details: string[]
   redirectChain: string[]
+  isHighTarget?: boolean
+  isVerified?: boolean
 }
 
 export interface BrandTarget {

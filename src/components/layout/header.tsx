@@ -66,7 +66,7 @@ export function Header({ user }: { user: any }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-none uppercase tracking-widest text-[10px] h-9 px-4 gap-2 border-border/60 hover:border-foreground/50"
+                  className="rounded-none uppercase tracking-widest text-[10px] h-9 px-4 gap-2 border-border hover:border-foreground/50"
                 >
                   <User className="h-3 w-3" />
                   {(() => {
@@ -106,7 +106,7 @@ export function Header({ user }: { user: any }) {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-none uppercase tracking-widest text-[10px] h-9 px-4 border-border/60 hover:border-foreground/50"
+              className="rounded-none uppercase tracking-widest text-[10px] h-9 px-4 border-border hover:border-foreground/50"
               asChild
             >
               <Link href="/login">Login</Link>

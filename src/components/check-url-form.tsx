@@ -4,7 +4,14 @@ import { useActionState, useState } from 'react'
 import { checkUrlAction } from '@/app/(frontend)/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   Loader2,
@@ -13,14 +20,11 @@ import {
   ShieldX,
   ShieldQuestion,
   CircleHelp,
+  BadgeCheck,
+  Crown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import Link from 'next/link'
 import { z } from 'zod'
 import { ReportDialog } from './report-dialog-button'
@@ -109,8 +113,32 @@ export function CheckUrlForm() {
                   </CardTitle>
                   <RiskBadge level={state.result.riskLevel} />
                 </div>
-                <CardDescription className="font-mono break-all text-xl text-foreground pt-2">
+                <CardDescription className="font-mono break-all text-xl text-foreground pt-2 flex items-center gap-2">
                   {state.result.domain}
+                  {state.result.isHighTarget && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <Crown className="w-5 h-5 text-yellow-500 fill-yellow-500 animate-pulse" />
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-none border-2 bg-popover p-2 font-mono text-[10px] uppercase tracking-widest shadow-xl">
+                          High Value Target
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {state.result.isVerified && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/20" />
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-none border-2 bg-popover p-2 font-mono text-[10px] uppercase tracking-widest shadow-xl text-primary">
+                          Verified Domain
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8 py-8">
@@ -176,7 +204,7 @@ export function CheckUrlForm() {
                           <Badge
                             key={flag}
                             variant="outline"
-                            className="rounded-none font-mono text-[10px] uppercase tracking-tighter py-0 px-2 border-muted-foreground/30"
+                            className="rounded-none font-mono text-[10px] uppercase tracking-tighter py-0 px-2 border-muted-foreground/60"
                           >
                             {flag}
                           </Badge>
@@ -218,7 +246,7 @@ export function CheckUrlForm() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-none uppercase tracking-widest text-[10px] flex-1 sm:flex-none border-green-500/20 hover:border-green-500/50 hover:bg-green-500/10 text-green-600 gap-2"
+                        className="rounded-none uppercase tracking-widest text-[10px] flex-1 sm:flex-none border-green-500/40 hover:border-green-500/60 hover:bg-green-500/10 text-green-600 dark:text-green-400 gap-2"
                       >
                         <ShieldCheck className="w-3 h-3" />
                         Vouch Safe
@@ -232,7 +260,7 @@ export function CheckUrlForm() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-none uppercase tracking-widest text-[10px] flex-1 sm:flex-none border-red-500/20 hover:border-red-500/50 hover:bg-red-500/10 text-red-600 gap-2"
+                        className="rounded-none uppercase tracking-widest text-[10px] flex-1 sm:flex-none border-red-500/40 hover:border-red-500/60 hover:bg-red-500/10 text-red-600 dark:text-red-400 gap-2"
                       >
                         <ShieldAlert className="w-3 h-3" />
                         Report
