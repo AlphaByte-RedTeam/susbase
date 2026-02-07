@@ -81,9 +81,6 @@ export default async function SubmissionsPage({
                   Status
                 </TableHead>
                 <TableHead className="uppercase tracking-widest text-xs font-normal py-4">
-                  Reason
-                </TableHead>
-                <TableHead className="uppercase tracking-widest text-xs font-normal py-4">
                   Submitted By
                 </TableHead>
                 <TableHead className="uppercase tracking-widest text-xs font-normal py-4 text-right">
@@ -95,7 +92,7 @@ export default async function SubmissionsPage({
               {reports.docs.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={4}
                     className="text-center py-20 text-muted-foreground uppercase tracking-widest text-xs"
                   >
                     No submissions found.
@@ -118,24 +115,16 @@ export default async function SubmissionsPage({
                       <TableCell className="py-6 font-mono">
                         <div className="flex flex-col gap-1">
                           <span className="text-sm font-medium text-foreground truncate max-w-[150px] md:max-w-xs block">
-                            {urlData?.url || 'Unknown'}
+                            {report.submitted_url || 'Unknown'}
                           </span>
                           <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">
-                            {urlData?.domain || ''}
+                            {report.submitted_domain || ''}
                           </span>
                           {urlData && <RiskBadge level={urlData.status} />}
                         </div>
                       </TableCell>
                       <TableCell className="py-6">
                         <SubmissionStatusBadge status={report.status || 'PENDING'} />
-                      </TableCell>
-                      <TableCell className="py-6 max-w-xs">
-                        <p
-                          className="text-xs text-muted-foreground truncate"
-                          title={report.comment}
-                        >
-                          {report.comment || 'No comment provided.'}
-                        </p>
                       </TableCell>
                       <TableCell className="py-6">
                         <span className="text-xs font-mono text-muted-foreground uppercase whitespace-nowrap">
