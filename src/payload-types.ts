@@ -210,6 +210,10 @@ export interface Report {
   submitted_url: string;
   submitted_domain: string;
   /**
+   * Check if this is a major brand/institution that should be protected.
+   */
+  is_high_target?: boolean | null;
+  /**
    * Supabase User ID
    */
   reporter_id: string;
@@ -394,6 +398,7 @@ export interface UrlsSelect<T extends boolean = true> {
 export interface ReportsSelect<T extends boolean = true> {
   submitted_url?: T;
   submitted_domain?: T;
+  is_high_target?: T;
   reporter_id?: T;
   reporter_name?: T;
   comment?: T;

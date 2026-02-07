@@ -110,6 +110,7 @@ export async function submitReportAction(prevState: any, formData: FormData) {
   const url = formData.get('url') as string
   const comment = formData.get('comment') as string
   const intent = formData.get('status') as string
+  const isHighTarget = formData.get('is_high_target') === 'true'
 
   if (!url) {
     return { error: 'URL is required.' }
@@ -154,6 +155,7 @@ export async function submitReportAction(prevState: any, formData: FormData) {
         submitted_domain: domain,
         reporter_id: user.id,
         reporter_name: reporterName,
+        is_high_target: isHighTarget,
         comment: finalComment,
         status: reportStatus as any,
       },

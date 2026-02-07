@@ -58,6 +58,36 @@ export const Reports: CollectionConfig = {
                 },
               })
             }
+
+            // 4. Handle High Value Target creation if checked
+            if (doc.is_high_target) {
+              const brandExisting = await payload.find({
+                collection: 'high-value-targets',
+                where: {
+                  official_domain: {
+                    equals: domain,
+                  },
+                },
+              })
+
+              if (brandExisting.docs.length === 0) {
+                // Format name: amazon.com -> Amazon, domain-good.com -> Domain Good
+                const nameBase = domain.split('.')[0]
+                const formattedName = nameBase
+                  .split('-')
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(' ')
+
+                await payload.create({
+                  collection: 'high-value-targets',
+                  data: {
+                    name: formattedName,
+                    official_domain: domain,
+                    variations: [],
+                  },
+                })
+              }
+            }
           } catch (error) {
             console.error('Error processing accepted report hook:', error)
           }
@@ -78,6 +108,16 @@ export const Reports: CollectionConfig = {
       name: 'submitted_domain',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'is_high_target',
+      type: 'checkbox',
+      label: 'Is High Target?',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Check if this is a major brand/institution that should be protected.',
+      },
     },
     {
       name: 'reporter_id',

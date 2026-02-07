@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Upload, X, Shield } from 'lucide-react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
@@ -46,6 +47,7 @@ const reportSchema = z.object({
   url: z.string().url('Please enter a valid URL'),
   status: z.enum(['SAFE', 'SUSPICIOUS', 'MALICIOUS', 'UNKNOWN']),
   comment: z.string().min(10, 'Please provide more details (at least 10 characters)'),
+  is_high_target: z.boolean().default(false),
   screenshot: z.any().optional(),
 })
 
@@ -65,6 +67,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
       url: defaultUrl || '',
       status: defaultIntent || 'MALICIOUS',
       comment: '',
+      is_high_target: false,
       screenshot: undefined as File | undefined,
     },
     onSubmit: async ({ value }) => {
@@ -74,6 +77,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
         formData.append('url', value.url)
         formData.append('status', value.status)
         formData.append('comment', value.comment)
+        formData.append('is_high_target', String(value.is_high_target))
         if (value.screenshot) {
           formData.append('screenshot', value.screenshot)
         }
@@ -133,7 +137,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-125 rounded-none border-2 font-mono">
+      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono">
         <DialogHeader>
           <DialogTitle className="uppercase tracking-widest text-lg font-normal">
             {defaultIntent === 'SAFE'
@@ -204,7 +208,7 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
                   >
                     <SelectTrigger className="w-full rounded-none border-input focus:ring-0 focus:border-primary font-mono text-sm uppercase">
                       <SelectValue placeholder="Select status" />
-                    </SelectTrigger>{' '}
+                    </SelectTrigger>
                     <SelectContent className="rounded-none font-mono">
                       <SelectItem value="MALICIOUS" className="uppercase text-xs">
                         Malicious
@@ -225,6 +229,25 @@ export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialo
               )}
             </form.Field>
           )}
+
+          <form.Field name="is_high_target">
+            {(field) => (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={(checked) => field.handleChange(!!checked)}
+                  className="rounded-none border-border"
+                />
+                <Label
+                  htmlFor={field.name}
+                  className="text-[10px] uppercase tracking-widest text-muted-foreground cursor-pointer"
+                >
+                  Is High Target?
+                </Label>
+              </div>
+            )}
+          </form.Field>
 
           <form.Field
             name="comment"
