@@ -7,4 +7,11 @@ export interface CheckResult {
   trustScore: number // 0 to 100, where 100 is perfectly safe
   flags: string[]
   details: string[]
+  redirectChain: string[]
+}
+
+export interface BrandTarget {
+  name: string
+  official_domain: string
+  variations: string[]
 }

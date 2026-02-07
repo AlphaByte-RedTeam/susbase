@@ -21,6 +21,13 @@ export const Reports: CollectionConfig = {
       },
     },
     {
+      name: 'reporter_name',
+      type: 'text',
+      admin: {
+        description: 'Formatted Name of the reporter',
+      },
+    },
+    {
       name: 'comment',
       type: 'textarea',
     },

@@ -56,13 +56,31 @@ export function Header({ user }: { user: any }) {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="rounded-none uppercase tracking-widest text-xs h-9 px-4 gap-2">
                 <User className="h-3 w-3" />
-                {user.email?.split('@')[0]}
+                {(() => {
+                  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+                  const parts = name.trim().split(/\s+/);
+                  if (parts.length === 1) return parts[0];
+                  const first = parts[0];
+                  // Prefer the very last part for the initial if multiple names exist, typical for western names.
+                  // Or just the next part. The prompt asked for "middle name if available or the last name first initials".
+                  // Let's take the second part if available as the "middle/last" initial.
+                  const lastInitial = parts[parts.length - 1][0].toUpperCase();
+                  return `${first} ${lastInitial}.`;
+                })()}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-none">
-              <DropdownMenuLabel className="uppercase tracking-widest text-xs">My Account</DropdownMenuLabel>
+              <DropdownMenuLabel className="uppercase tracking-widest text-xs">
+                My Account
+                <span className="block text-[10px] text-muted-foreground mt-1 font-normal normal-case">
+                  Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </span>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="uppercase tracking-wider text-xs cursor-pointer text-destructive focus:text-destructive">
+              <DropdownMenuItem 
+                onClick={handleLogout} 
+                className="uppercase tracking-wider text-xs cursor-pointer bg-destructive text-destructive-foreground focus:bg-destructive/90 focus:text-destructive-foreground rounded-none m-1"
+              >
                 <LogOut className="mr-2 h-3 w-3" />
                 Log out
               </DropdownMenuItem>

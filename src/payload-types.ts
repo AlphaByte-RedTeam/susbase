@@ -209,6 +209,10 @@ export interface Report {
    * Supabase User ID
    */
   reporter_id: string;
+  /**
+   * Formatted Name of the reporter
+   */
+  reporter_name?: string | null;
   comment?: string | null;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
   modified_by?: (string | null) | User;
@@ -386,6 +390,7 @@ export interface UrlsSelect<T extends boolean = true> {
 export interface ReportsSelect<T extends boolean = true> {
   url_id?: T;
   reporter_id?: T;
+  reporter_name?: T;
   comment?: T;
   status?: T;
   modified_by?: T;

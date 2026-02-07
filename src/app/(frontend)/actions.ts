@@ -1,16 +1,24 @@
 'use server'
 
 import { analyzeUrl } from '@/lib/engine'
-import { CheckResult } from '@/lib/engine/types'
+import { CheckResult, BrandTarget } from '@/lib/engine/types'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { createClient } from '@/lib/supabase/server'
 import { TARGET_WHITELIST } from '@/lib/engine/data'
+import { z } from 'zod'
 
 export async function checkUrlAction(prevState: any, formData: FormData) {
   const url = formData.get('url') as string
-  if (!url) {
-    return { error: 'Please enter a URL' }
+  
+  // Zod Validation: Ensure valid URL with http/https
+  const urlSchema = z.string().url().refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
+    message: "URL must start with http:// or https://"
+  })
+
+  const validation = urlSchema.safeParse(url)
+  if (!validation.success) {
+    return { error: validation.error.issues[0].message }
   }
 
   try {
@@ -26,21 +34,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
       },
     })
 
-    if (existing.docs.length > 0) {
-      const doc = existing.docs[0]
-      return { 
-        result: {
-          url: doc.url,
-          domain: doc.domain,
-          riskLevel: doc.status,
-          trustScore: doc.trust_score,
-          flags: Array.isArray(doc.flags) ? doc.flags : [],
-          details: ['Retrieved from our database.'],
-        } as CheckResult
-      }
-    }
-
-    // 2. Fetch Dynamic Whitelist (SAFE URLs from DB)
+    // 2. Fetch Dynamic Whitelist (SAFE URLs)
     const safeUrls = await payload.find({
       collection: 'urls',
       where: {
@@ -48,25 +42,73 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
           equals: 'SAFE',
         },
       },
-      limit: 1000, // Fetch a reasonable amount for the engine
+      limit: 1000, 
     })
     
-    // Combine static and dynamic whitelist
     const dynamicWhitelist = [
       ...TARGET_WHITELIST,
       ...safeUrls.docs.map(doc => doc.domain)
     ]
 
-    // 3. Run Engine (passing dynamic whitelist via some mechanism, or modifying engine to accept it)
-    // Since analyzeUrl imports TARGET_WHITELIST directly, we need to modify analyzeUrl to accept an optional whitelist override.
-    // For now, let's assume analyzeUrl can take a second argument or we just modify the logic here if we were in the same file.
-    // We need to update analyzeUrl signature.
+    // 3. Fetch High Value Targets for Impersonation Check
+    const brandTargetsReq = await payload.find({
+      collection: 'high-value-targets',
+      limit: 100,
+    })
+    const brandTargets: BrandTarget[] = brandTargetsReq.docs.map((doc: any) => ({
+      name: doc.name,
+      official_domain: doc.official_domain,
+      variations: Array.isArray(doc.variations) ? doc.variations : []
+    }))
 
-    const result = await analyzeUrl(url, dynamicWhitelist)
+    // 4. Always Run Engine (On-the-fly analysis)
+    const analysis = await analyzeUrl(url, dynamicWhitelist, brandTargets)
 
-    // 4. Do not save to DB (On-the-fly check only)
+    // 5. Calculate Dynamic Trust Score
+    let finalTrust = analysis.trustScore
+    let finalStatus = analysis.riskLevel
+    const dbFlags = existing.docs.length > 0 ? (existing.docs[0].flags as string[] || []) : []
+    const combinedFlags = [...new Set([...analysis.flags, ...dbFlags])]
+
+    if (existing.docs.length > 0) {
+      const dbDoc = existing.docs[0]
+      const dbScoreAnchor = dbDoc.status === 'SAFE' ? 95 : 
+                            dbDoc.status === 'MALICIOUS' ? 10 : 
+                            dbDoc.status === 'SUSPICIOUS' ? 40 : 50
+      
+      // Blend: 40% Engine, 60% DB Consensus
+      if (analysis.trustScore < 50) {
+         finalTrust = Math.min(analysis.trustScore, dbScoreAnchor)
+      } else {
+         finalTrust = Math.round((analysis.trustScore * 0.4) + (dbScoreAnchor * 0.6))
+      }
+
+      // Adjust based on report count
+      if (dbDoc.status !== 'SAFE' && (dbDoc.reports_count || 0) > 0) {
+         finalTrust -= Math.min(20, (dbDoc.reports_count || 0) * 2)
+      }
+    }
+
+    // 6. Final Range Normalization
+    finalTrust = Math.max(0, Math.min(100, finalTrust))
     
-    return { result }
+    if (finalTrust >= 90) finalStatus = 'SAFE'
+    else if (finalTrust >= 50) finalStatus = 'SUSPICIOUS'
+    else finalStatus = 'MALICIOUS'
+
+    return { 
+      result: {
+        url: analysis.url,
+        domain: analysis.domain,
+        riskLevel: finalStatus,
+        trustScore: finalTrust,
+        flags: combinedFlags,
+        details: existing.docs.length > 0 
+          ? [...analysis.details, `Historical record found: ${existing.docs[0].status} (${existing.docs[0].reports_count} reports)`]
+          : analysis.details,
+        redirectChain: analysis.redirectChain
+      } as CheckResult
+    }
   } catch (error) {
     console.error('Error checking URL:', error)
     return { error: 'Failed to analyze URL. Please try again.' }
@@ -132,6 +174,7 @@ export async function submitReportAction(prevState: any, formData: FormData) {
           trust_score: initialTrust,
           flags: analysis.flags,
           reports_count: 0,
+          redirect_chain: analysis.redirectChain,
         },
       })
     }
@@ -149,12 +192,21 @@ export async function submitReportAction(prevState: any, formData: FormData) {
       }
     }
 
+    // Determine Formatted Name
+    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Anonymous';
+    const nameParts = rawName.trim().split(/\s+/);
+    let reporterName = rawName;
+    if (nameParts.length > 1) {
+      reporterName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0].toUpperCase()}.`;
+    }
+
     // 2. Create Report
     await payload.create({
       collection: 'reports',
       data: {
         url_id: urlDoc.id,
         reporter_id: user.id,
+        reporter_name: reporterName,
         comment: reportStatus === 'REJECTED' ? `[Auto-Rejected] ${comment}` : comment,
         status: reportStatus as any, 
       },

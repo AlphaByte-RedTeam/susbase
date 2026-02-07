@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Upload, X, ShieldAlert } from 'lucide-react'
+import { Loader2, Upload, X, Shield } from 'lucide-react'
 import { useForm, FieldApi } from '@tanstack/react-form'
 import { zodValidator } from '@tanstack/zod-form-adapter'
 import { z } from 'zod'
@@ -31,14 +31,16 @@ import Image from 'next/image'
 
 // Helper FieldInfo component for displaying errors
 function FieldInfo({ field }: { field: FieldApi<any, any, any, any> }) {
+  if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
+  
   return (
-    <>
-      {field.state.meta.isTouched && field.state.meta.errors.length ? (
-        <p className="text-[10px] uppercase tracking-widest text-destructive mt-1">
-          {field.state.meta.errors.join(', ')}
+    <div className="text-[10px] uppercase tracking-widest text-destructive mt-1">
+      {field.state.meta.errors.map((error, i) => (
+        <p key={i}>
+          {typeof error === 'string' ? error : (error as any)?.message || JSON.stringify(error)}
         </p>
-      ) : null}
-    </>
+      ))}
+    </div>
   )
 }
 
@@ -46,7 +48,7 @@ const reportSchema = z.object({
   url: z.string().url('Please enter a valid URL'),
   status: z.enum(['SAFE', 'SUSPICIOUS', 'MALICIOUS', 'UNKNOWN']),
   comment: z.string().min(10, 'Please provide more details (at least 10 characters)'),
-  screenshot: z.any().optional(), // We'll handle file validation manually or refine this
+  screenshot: z.any().optional(),
 })
 
 export function ReportDialogButton() {
@@ -78,7 +80,7 @@ export function ReportDialogButton() {
         if (result.error) {
           toast.error(result.error)
         } else {
-          toast.success('Report submitted successfully')
+          toast.success('Submission received')
           setOpen(false)
           form.reset()
           setPreviewUrl(null)
@@ -112,16 +114,16 @@ export function ReportDialogButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" className="rounded-none uppercase tracking-widest text-xs h-9 px-4 gap-2">
-          <ShieldAlert className="w-4 h-4" />
-          Report URL
+        <Button variant="outline" className="rounded-none uppercase tracking-widest text-xs h-9 px-4 gap-2">
+          <Shield className="w-4 h-4" />
+          Submit URL
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono">
         <DialogHeader>
-          <DialogTitle className="uppercase tracking-widest text-lg font-normal">Report Suspicious URL</DialogTitle>
+          <DialogTitle className="uppercase tracking-widest text-lg font-normal">Contribute to SusBase</DialogTitle>
           <DialogDescription className="text-xs uppercase tracking-tight text-muted-foreground">
-            Submit a URL for analysis and warn the community.
+            Vouch for a safe site to build our whitelist, or report a malicious one.
           </DialogDescription>
         </DialogHeader>
 
@@ -197,7 +199,7 @@ export function ReportDialogButton() {
                 </Label>
                 <Textarea
                   id={field.name}
-                  placeholder="DESCRIBE WHY THIS URL IS SUSPICIOUS..."
+                  placeholder="DESCRIBE YOUR FINDINGS (E.G. 'OFFICIAL LOGIN PAGE' OR 'PHISHING SCAM')..."
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}

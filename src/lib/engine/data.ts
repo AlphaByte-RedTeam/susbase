@@ -64,3 +64,24 @@ export const HIGH_RISK_TLDS = [
   '.rest',
   '.fit',
 ]
+
+export const KNOWN_BLOCK_PAGES = [
+  'internetpositif',
+  'mercusuar',
+  'trustpos',
+  'blockpage',
+  'blocked',
+  'uzone',
+  'ioh.co.id', // Indosat block
+]
+
+export const BLOCK_PAGE_KEYWORDS = [
+  'internet positif',
+  'situs ini diblokir',
+  'situs terlarang',
+  'access denied',
+  'site blocked',
+  'mercusuar',
+  'internet sehat',
+  'uzone',
+]
