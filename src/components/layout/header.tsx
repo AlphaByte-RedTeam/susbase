@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Github, User, LogOut } from 'lucide-react'
+import { User, LogOut } from 'lucide-react'
+import { IconBrandGithub } from '@tabler/icons-react'
 import { ModeToggle } from '@/components/ui/mode-toggle'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,13 +41,22 @@ export function Header({ user }: { user: any }) {
           />
         </Link>
         <nav className="hidden lg:flex gap-8 text-sm items-center text-muted-foreground font-medium uppercase tracking-wider">
-          <Link href="/leaderboard" className="hover:text-foreground transition-colors whitespace-nowrap">
+          <Link
+            href="/leaderboard"
+            className="hover:text-foreground transition-colors whitespace-nowrap"
+          >
             Leaderboard
           </Link>
-          <Link href="/submissions" className="hover:text-foreground transition-colors whitespace-nowrap">
+          <Link
+            href="/submissions"
+            className="hover:text-foreground transition-colors whitespace-nowrap"
+          >
             Submissions
           </Link>
-          <Link href="/how-it-works" className="hover:text-foreground transition-colors whitespace-nowrap">
+          <Link
+            href="/how-it-works"
+            className="hover:text-foreground transition-colors whitespace-nowrap"
+          >
             How It Works
           </Link>
         </nav>
@@ -61,7 +71,7 @@ export function Header({ user }: { user: any }) {
             className="hover:text-foreground transition-colors p-2"
             aria-label="GitHub"
           >
-            <Github className="w-5 h-5" />
+            <IconBrandGithub className="w-5 h-5" />
           </Link>
           <div className="h-4 w-[1px] bg-border/60 mx-1" />
           <ModeToggle />

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Menu, Github, User, LogOut, Shield } from 'lucide-react'
+import { Menu, User, LogOut, Shield } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/ui/mode-toggle'
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ReportDialog } from '@/components/report-dialog-button'
+import { IconBrandGithub } from '@tabler/icons-react'
 
 interface MobileNavProps {
   user: any
@@ -80,7 +81,7 @@ export function MobileNav({ user }: MobileNavProps) {
               className="flex items-center gap-3 hover:text-primary transition-colors pb-2 border-b border-border/40"
               onClick={() => setOpen(false)}
             >
-              <Github className="w-4 h-4" />
+              <IconBrandGithub className="w-4 h-4" />
               GitHub
             </Link>
           </nav>

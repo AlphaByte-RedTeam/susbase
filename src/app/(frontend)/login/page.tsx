@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Github, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { IconBrandGithub } from '@tabler/icons-react'
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -68,7 +69,7 @@ export default function LoginPage() {
               onClick={() => handleLogin('github')}
               disabled={loading}
             >
-              <Github className="mr-3 h-5 w-5" />
+              <IconBrandGithub className="mr-3 h-5 w-5" />
               Continue with GitHub
             </Button>
 
