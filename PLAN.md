@@ -41,6 +41,16 @@
 * **UI Library:** Tailwind CSS + Shadcn UI.
 * **Theme:** "Lyra" / Minimalist Monospace (High contrast, "Terminal-lite" aesthetic).
 
+### Deployment & Hosting
+* **Hosting:** Vercel.
+* **CDN:** Cloudflare.
+
+### Development Tools
+* **Biome:**
+    * *Formatter:* Biome Formatter.
+    * *Linter:* Biome Linter.
+    * *Type Checker:* Biome Type Checker.
+
 ## 3. The "Smart Algorithm" (SusEngine)
 Located in `src/lib/engine`. It performs purely logic-based checks before human verification.
 
