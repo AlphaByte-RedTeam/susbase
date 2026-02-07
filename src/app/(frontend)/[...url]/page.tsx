@@ -18,8 +18,8 @@ export default async function MagicEntryPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Reconstruct the URL from catch-all parts
-  // We handle the case where protocols like https:/ might have lost a slash during routing
-  let targetUrl = urlParts.join('/')
+  // We decode the parts to handle percent-encoded characters like %3A
+  let targetUrl = urlParts.map(part => decodeURIComponent(part)).join('/')
   
   // Fix double slash if it looks like a protocol was intended but collapsed
   if (targetUrl.startsWith('http:/') && !targetUrl.startsWith('http://')) {
