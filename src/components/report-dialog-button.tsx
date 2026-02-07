@@ -29,13 +29,12 @@ import { submitReportAction } from '@/app/(frontend)/actions'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
-// Helper FieldInfo component for displaying errors
 function FieldInfo({ field }: { field: FieldApi<any, any, any, any> }) {
   if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
 
   return (
     <div className="text-[10px] uppercase tracking-widest text-destructive mt-1">
-      {field.state.meta.errors.map((error, i) => (
+      {field.state.meta.errors.map((error: any, i: any) => (
         <p key={i}>
           {typeof error === 'string' ? error : (error as any)?.message || JSON.stringify(error)}
         </p>
@@ -51,7 +50,13 @@ const reportSchema = z.object({
   screenshot: z.any().optional(),
 })
 
-export function ReportDialogButton() {
+interface ReportDialogProps {
+  defaultUrl?: string
+  defaultIntent?: 'SAFE' | 'MALICIOUS' | 'SUSPICIOUS'
+  trigger?: React.ReactNode
+}
+
+export function ReportDialog({ defaultUrl, defaultIntent, trigger }: ReportDialogProps) {
   const [open, setOpen] = React.useState(false)
   const [isPending, setIsPending] = React.useState(false)
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
@@ -59,8 +64,8 @@ export function ReportDialogButton() {
   const form = useForm({
     validatorAdapter: zodValidator(),
     defaultValues: {
-      url: '',
-      status: 'MALICIOUS' as const,
+      url: defaultUrl || '',
+      status: defaultIntent || 'MALICIOUS',
       comment: '',
       screenshot: undefined as File | undefined,
     },
@@ -94,6 +99,12 @@ export function ReportDialogButton() {
     },
   })
 
+  // Sync default URL and Intent
+  React.useEffect(() => {
+    if (defaultUrl) form.setFieldValue('url', defaultUrl)
+    if (defaultIntent) form.setFieldValue('status', defaultIntent)
+  }, [defaultUrl, defaultIntent, form])
+
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: FieldApi<any, any, any, any>,
@@ -117,21 +128,29 @@ export function ReportDialogButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="rounded-none w-full md:w-auto uppercase tracking-widest text-xs h-9 px-4 gap-2"
-        >
-          <Shield className="w-4 h-4" />
-          Submit URL
-        </Button>
+        {trigger || (
+          <Button
+            variant="outline"
+            className="rounded-none uppercase tracking-widest text-xs h-9 px-4 gap-2"
+          >
+            <Shield className="w-4 h-4" />
+            Submit URL
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-125 rounded-none border-2 font-mono">
+      <DialogContent className="sm:max-w-[500px] rounded-none border-2 font-mono">
         <DialogHeader>
           <DialogTitle className="uppercase tracking-widest text-lg font-normal">
-            Contribute to SusBase
+            {defaultIntent === 'SAFE'
+              ? 'Vouch Safe Site'
+              : defaultIntent === 'MALICIOUS'
+                ? 'Report Malicious Site'
+                : 'Contribute to SusBase'}
           </DialogTitle>
           <DialogDescription className="text-xs uppercase tracking-tight text-muted-foreground">
-            Vouch for a safe site to build our whitelist, or report a malicious one.
+            {defaultIntent === 'SAFE'
+              ? 'Verify this domain is legitimate to help our whitelist.'
+              : 'Submit evidence of phishing, malware, or scams.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -164,44 +183,47 @@ export function ReportDialogButton() {
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                   className="rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-sm"
+                  readOnly={!!defaultUrl}
                 />
                 <FieldInfo field={field} />
               </div>
             )}
           </form.Field>
 
-          <form.Field name="status">
-            {(field) => (
-              <div className="space-y-2">
-                <Label
-                  htmlFor={field.name}
-                  className="uppercase tracking-widest text-[10px] text-muted-foreground"
-                >
-                  Risk Level
-                </Label>
-                <Select value={field.state.value} onValueChange={field.handleChange}>
-                  <SelectTrigger className="w-full rounded-none border-input focus:ring-0 focus:border-primary font-mono text-sm uppercase">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-none font-mono">
-                    <SelectItem value="MALICIOUS" className="uppercase text-xs">
-                      Malicious
-                    </SelectItem>
-                    <SelectItem value="SUSPICIOUS" className="uppercase text-xs">
-                      Suspicious
-                    </SelectItem>
-                    <SelectItem value="SAFE" className="uppercase text-xs">
-                      Safe
-                    </SelectItem>
-                    <SelectItem value="UNKNOWN" className="uppercase text-xs">
-                      Unknown
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <FieldInfo field={field} />
-              </div>
-            )}
-          </form.Field>
+          {!defaultIntent && (
+            <form.Field name="status">
+              {(field) => (
+                <div className="space-y-2">
+                  <Label
+                    htmlFor={field.name}
+                    className="uppercase tracking-widest text-[10px] text-muted-foreground"
+                  >
+                    Risk Level
+                  </Label>
+                  <Select value={field.state.value} onValueChange={field.handleChange}>
+                    <SelectTrigger className="w-full rounded-none border-input focus:ring-0 focus:border-primary font-mono text-sm uppercase">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none font-mono">
+                      <SelectItem value="MALICIOUS" className="uppercase text-xs">
+                        Malicious
+                      </SelectItem>
+                      <SelectItem value="SUSPICIOUS" className="uppercase text-xs">
+                        Suspicious
+                      </SelectItem>
+                      <SelectItem value="SAFE" className="uppercase text-xs">
+                        Safe
+                      </SelectItem>
+                      <SelectItem value="UNKNOWN" className="uppercase text-xs">
+                        Unknown
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FieldInfo field={field} />
+                </div>
+              )}
+            </form.Field>
+          )}
 
           <form.Field
             name="comment"
@@ -219,11 +241,15 @@ export function ReportDialogButton() {
                 </Label>
                 <Textarea
                   id={field.name}
-                  placeholder="DESCRIBE YOUR FINDINGS (E.G. 'OFFICIAL LOGIN PAGE' OR 'PHISHING SCAM')..."
+                  placeholder={
+                    defaultIntent === 'SAFE'
+                      ? 'WHY IS THIS SITE SAFE? (E.G. OFFICIAL BANK LOGIN)...'
+                      : 'DESCRIBE THE THREAT (E.G. PHISHING, FAKE LOGIN)...'
+                  }
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  className="min-h-25 rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-xs uppercase placeholder:normal-case placeholder:text-muted-foreground/50"
+                  className="min-h-[100px] rounded-none border-input focus-visible:ring-0 focus-visible:border-primary font-mono text-xs uppercase placeholder:normal-case placeholder:text-muted-foreground/50"
                 />
                 <FieldInfo field={field} />
               </div>

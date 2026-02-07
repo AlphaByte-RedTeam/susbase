@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { ReportDialogButton } from '@/components/report-dialog-button'
+import { ReportDialog } from '@/components/report-dialog-button'
 import { MobileNav } from '@/components/layout/mobile-nav'
 
 export function Header({ user }: { user: any }) {
@@ -40,22 +40,13 @@ export function Header({ user }: { user: any }) {
           />
         </Link>
         <nav className="hidden lg:flex gap-8 text-sm items-center text-muted-foreground font-medium uppercase tracking-wider">
-          <Link
-            href="/leaderboard"
-            className="hover:text-foreground transition-colors whitespace-nowrap"
-          >
+          <Link href="/leaderboard" className="hover:text-foreground transition-colors whitespace-nowrap">
             Leaderboard
           </Link>
-          <Link
-            href="/submissions"
-            className="hover:text-foreground transition-colors whitespace-nowrap"
-          >
+          <Link href="/submissions" className="hover:text-foreground transition-colors whitespace-nowrap">
             Submissions
           </Link>
-          <Link
-            href="/how-it-works"
-            className="hover:text-foreground transition-colors whitespace-nowrap"
-          >
+          <Link href="/how-it-works" className="hover:text-foreground transition-colors whitespace-nowrap">
             How It Works
           </Link>
         </nav>
@@ -127,7 +118,7 @@ export function Header({ user }: { user: any }) {
               <Link href="/login">Login</Link>
             </Button>
           )}
-          <ReportDialogButton />
+          <ReportDialog />
         </nav>
 
         {/* Mobile Nav Trigger */}

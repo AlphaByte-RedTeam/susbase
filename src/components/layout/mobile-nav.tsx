@@ -2,14 +2,14 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Menu, ShieldCheck, Github, User, LogOut, Shield } from 'lucide-react'
+import { Menu, Github, User, LogOut, Shield } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/ui/mode-toggle'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ReportDialogButton } from '@/components/report-dialog-button'
+import { ReportDialog } from '@/components/report-dialog-button'
 
 interface MobileNavProps {
   user: any
@@ -50,7 +50,7 @@ export function MobileNav({ user }: MobileNavProps) {
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col flex-1 justify-between p-6">
+        <div className="flex flex-col flex-1 justify-between p-6 overflow-y-auto">
           {/* MENU SECTION */}
           <nav className="flex flex-col gap-6 text-sm font-medium uppercase tracking-wider">
             <Link
@@ -86,14 +86,14 @@ export function MobileNav({ user }: MobileNavProps) {
           </nav>
 
           {/* ACTION SECTION */}
-          <div className="space-y-6 pt-6 border-t border-border/40">
+          <div className="space-y-6 pt-6 border-t border-border/40 mt-6">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-widest text-muted-foreground">Theme</span>
               <ModeToggle />
             </div>
 
-            {user ? (
-              <div className="space-y-4">
+            <div className="space-y-4">
+              {user && (
                 <div className="flex items-center gap-3 p-3 border bg-muted/20">
                   <User className="h-5 w-5 text-muted-foreground" />
                   <div className="flex flex-col overflow-hidden">
@@ -118,51 +118,40 @@ export function MobileNav({ user }: MobileNavProps) {
                     </span>
                   </div>
                 </div>
+              )}
 
-                <ReportDialogButton
-                  trigger={
-                    <Button
-                      variant="outline"
-                      className="w-full rounded-none uppercase tracking-widest text-xs gap-2 justify-center"
-                    >
-                      <Shield className="w-4 h-4" />
-                      Submit URL
-                    </Button>
-                  }
-                />
+              <ReportDialog
+                trigger={
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-none uppercase tracking-widest text-xs gap-2 justify-center h-12"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Submit URL
+                  </Button>
+                }
+              />
 
+              {user ? (
                 <Button
                   variant="destructive"
-                  className="w-full rounded-none uppercase tracking-widest text-xs gap-2"
+                  className="w-full rounded-none uppercase tracking-widest text-xs gap-2 h-12"
                   onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4" />
                   Log Out
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <ReportDialog
-                  trigger={
-                    <Button
-                      variant="outline"
-                      className="w-full rounded-none uppercase tracking-widest text-xs gap-2 justify-center"
-                    >
-                      <Shield className="w-4 h-4" />
-                      Submit URL
-                    </Button>
-                  }
-                />
+              ) : (
                 <Button
                   variant="default"
-                  className="w-full rounded-none uppercase tracking-widest text-xs"
+                  className="w-full rounded-none uppercase tracking-widest text-xs h-12"
                   asChild
                   onClick={() => setOpen(false)}
                 >
                   <Link href="/login">Login / Sign Up</Link>
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </SheetContent>
