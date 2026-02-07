@@ -204,7 +204,11 @@ export interface Url {
  */
 export interface Report {
   id: string;
-  url_id: string | Url;
+  /**
+   * URL submitted for review
+   */
+  submitted_url: string;
+  submitted_domain: string;
   /**
    * Supabase User ID
    */
@@ -388,7 +392,8 @@ export interface UrlsSelect<T extends boolean = true> {
  * via the `definition` "reports_select".
  */
 export interface ReportsSelect<T extends boolean = true> {
-  url_id?: T;
+  submitted_url?: T;
+  submitted_domain?: T;
   reporter_id?: T;
   reporter_name?: T;
   comment?: T;

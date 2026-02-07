@@ -3,13 +3,72 @@ import type { CollectionConfig } from 'payload'
 export const Reports: CollectionConfig = {
   slug: 'reports',
   admin: {
-    useAsTitle: 'url_id',
+    useAsTitle: 'submitted_domain',
+  },
+  hooks: {
+    afterChange: [
+      async ({ doc, req, operation }) => {
+        if (operation === 'update' && doc.status === 'ACCEPTED') {
+          const { payload } = req
+          const domain = doc.submitted_domain
+
+          if (!domain) return
+
+          try {
+            // 1. Find if URL exists by domain
+            const existing = await payload.find({
+              collection: 'urls',
+              where: {
+                domain: {
+                  equals: domain,
+                },
+              },
+            })
+
+            if (existing.docs.length > 0) {
+              const urlDoc = existing.docs[0]
+              // 2. Update existing
+              await payload.update({
+                collection: 'urls',
+                id: urlDoc.id,
+                data: {
+                  reports_count: (urlDoc.reports_count || 0) + 1,
+                  // Deduct 1 point per accepted report
+                  trust_score: Math.max(0, (urlDoc.trust_score || 50) - 1),
+                },
+              })
+            } else {
+              // 3. Create new if missing
+              await payload.create({
+                collection: 'urls',
+                data: {
+                  url: doc.submitted_url,
+                  domain: domain,
+                  status: 'MALICIOUS', // Default when accepted from report
+                  trust_score: 20,
+                  reports_count: 1,
+                },
+              })
+            }
+          } catch (error) {
+            console.error('Error processing accepted report hook:', error)
+          }
+        }
+      },
+    ],
   },
   fields: [
     {
-      name: 'url_id',
-      type: 'relationship',
-      relationTo: 'urls',
+      name: 'submitted_url',
+      type: 'text',
+      required: true,
+      admin: {
+        description: 'URL submitted for review',
+      },
+    },
+    {
+      name: 'submitted_domain',
+      type: 'text',
       required: true,
     },
     {

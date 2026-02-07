@@ -72,20 +72,20 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
 
     if (existing.docs.length > 0) {
       const dbDoc = existing.docs[0]
-      const dbScoreAnchor = dbDoc.status === 'SAFE' ? 95 : 
-                            dbDoc.status === 'MALICIOUS' ? 10 : 
-                            dbDoc.status === 'SUSPICIOUS' ? 40 : 50
-      
-      // Blend: 40% Engine, 60% DB Consensus
-      if (analysis.trustScore < 50) {
-         finalTrust = Math.min(analysis.trustScore, dbScoreAnchor)
-      } else {
-         finalTrust = Math.round((analysis.trustScore * 0.4) + (dbScoreAnchor * 0.6))
-      }
+      // Base Score per Status
+      let baseScore = 60 // UNKNOWN/SUSPICIOUS default
+      if (dbDoc.status === 'SAFE') baseScore = 100
+      else if (dbDoc.status === 'MALICIOUS') baseScore = 20
 
-      // Adjust based on report count
-      if (dbDoc.status !== 'SAFE' && (dbDoc.reports_count || 0) > 0) {
-         finalTrust -= Math.min(20, (dbDoc.reports_count || 0) * 2)
+      // Crowd Decay: -1 point per report
+      const crowdPenalty = (dbDoc.reports_count || 0) * 1
+      
+      const dbCalculatedScore = baseScore - crowdPenalty + (dbDoc.vote_score || 0)
+
+      if (analysis.trustScore < 50) {
+         finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
+      } else {
+         finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
       }
     }
 
@@ -133,64 +133,7 @@ export async function submitReportAction(prevState: any, formData: FormData) {
 
   try {
     const payload = await getPayload({ config })
-
-    // 1. Find or Create URL
-    let urlDoc
-    const existing = await payload.find({
-      collection: 'urls',
-      where: {
-        url: {
-          equals: url,
-        },
-      },
-    })
-
-    if (existing.docs.length > 0) {
-      urlDoc = existing.docs[0]
-    } else {
-      // Analyze and create if not exists
-      const analysis = await analyzeUrl(url)
-      
-      // If user reports as SAFE, we trust them initially with a high score
-      let initialTrust = analysis.trustScore
-      let initialStatus = analysis.riskLevel
-
-      // Override if user explicitly reports as SAFE and engine didn't find hard evidence (like whitelist or typosquat)
-      // We accept the user's SAFE judgment only if the engine didn't flag it as MALICIOUS
-      if (status === 'SAFE' && analysis.riskLevel !== 'MALICIOUS') {
-        initialTrust = 100
-        initialStatus = 'SAFE'
-      } else if (status === 'MALICIOUS') {
-        initialTrust = 0
-        initialStatus = 'MALICIOUS'
-      }
-
-      urlDoc = await payload.create({
-        collection: 'urls',
-        data: {
-          url: analysis.url,
-          domain: analysis.domain,
-          status: initialStatus as any,
-          trust_score: initialTrust,
-          flags: analysis.flags,
-          reports_count: 0,
-          redirect_chain: analysis.redirectChain,
-        },
-      })
-    }
-
-    // Determine Report Status (Auto-Reject Logic)
-    let reportStatus = 'PENDING'
-    
-    // Auto-reject "SAFE" reports for known malicious sites
-    if (status === 'SAFE') {
-      const isKnownBad = urlDoc.status === 'MALICIOUS' || urlDoc.status === 'SUSPICIOUS'
-      const hasBadFlags = Array.isArray(urlDoc.flags) && (urlDoc.flags.includes('typosquatting') || urlDoc.flags.includes('phishing'))
-      
-      if (isKnownBad || hasBadFlags) {
-        reportStatus = 'REJECTED'
-      }
-    }
+    const domain = new URL(url).hostname.toLowerCase()
 
     // Determine Formatted Name
     const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Anonymous';
@@ -200,30 +143,24 @@ export async function submitReportAction(prevState: any, formData: FormData) {
       reporterName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0].toUpperCase()}.`;
     }
 
+    const reportStatus = 'PENDING'
+
     // 2. Create Report
+    // We no longer link url_id here or update counts.
+    // The Admin will "Accept" the report, triggering the hook to update/create the URL record.
     await payload.create({
       collection: 'reports',
       data: {
-        url_id: urlDoc.id,
+        submitted_url: url,
+        submitted_domain: domain,
         reporter_id: user.id,
         reporter_name: reporterName,
-        comment: reportStatus === 'REJECTED' ? `[Auto-Rejected] ${comment}` : comment,
+        comment: comment,
         status: reportStatus as any, 
       },
     })
 
-    // 3. Update Reports Count & Dynamic Trust Scoring
-    // If multiple people report SAFE, it stays SAFE.
-    // If people report MALICIOUS, score drops.
-    await payload.update({
-      collection: 'urls',
-      id: urlDoc.id,
-      data: {
-        reports_count: (urlDoc.reports_count || 0) + 1,
-      },
-    })
-
-    return { success: true, message: 'Report submitted successfully! Thank you for your contribution.' }
+    return { success: true, message: 'Report submitted for review. Thank you!' }
   } catch (error) {
     console.error('Error submitting report:', error)
     return { error: 'Failed to submit report. Please try again later.' }
