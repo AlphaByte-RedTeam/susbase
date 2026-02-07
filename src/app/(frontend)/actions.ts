@@ -10,11 +10,13 @@ import { z } from 'zod'
 
 export async function checkUrlAction(prevState: any, formData: FormData) {
   const url = formData.get('url') as string
-  
+
   // Zod Validation: Ensure valid URL with http/https
-  const urlSchema = z.string().url().refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
-    message: "URL must start with http:// or https://"
-  })
+  const urlSchema = z
+    .url()
+    .refine((val) => val.startsWith('http://') || val.startsWith('https://'), {
+      message: 'URL must start with http:// or https://',
+    })
 
   const validation = urlSchema.safeParse(url)
   if (!validation.success) {
@@ -23,7 +25,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
 
   try {
     const payload = await getPayload({ config })
-    
+
     // 1. Check DB first
     const existing = await payload.find({
       collection: 'urls',
@@ -42,13 +44,10 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
           equals: 'SAFE',
         },
       },
-      limit: 1000, 
+      limit: 1000,
     })
-    
-    const dynamicWhitelist = [
-      ...TARGET_WHITELIST,
-      ...safeUrls.docs.map(doc => doc.domain)
-    ]
+
+    const dynamicWhitelist = [...TARGET_WHITELIST, ...safeUrls.docs.map((doc) => doc.domain)]
 
     // 3. Fetch High Value Targets for Impersonation Check
     const brandTargetsReq = await payload.find({
@@ -58,7 +57,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     const brandTargets: BrandTarget[] = brandTargetsReq.docs.map((doc: any) => ({
       name: doc.name,
       official_domain: doc.official_domain,
-      variations: Array.isArray(doc.variations) ? doc.variations : []
+      variations: Array.isArray(doc.variations) ? doc.variations : [],
     }))
 
     // 4. Always Run Engine (On-the-fly analysis)
@@ -67,7 +66,7 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
     // 5. Calculate Dynamic Trust Score
     let finalTrust = analysis.trustScore
     let finalStatus = analysis.riskLevel
-    const dbFlags = existing.docs.length > 0 ? (existing.docs[0].flags as string[] || []) : []
+    const dbFlags = existing.docs.length > 0 ? (existing.docs[0].flags as string[]) || [] : []
     const combinedFlags = [...new Set([...analysis.flags, ...dbFlags])]
 
     if (existing.docs.length > 0) {
@@ -79,35 +78,39 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
 
       // Crowd Decay: -1 point per report
       const crowdPenalty = (dbDoc.reports_count || 0) * 1
-      
+
       const dbCalculatedScore = baseScore - crowdPenalty + (dbDoc.vote_score || 0)
 
       if (analysis.trustScore < 50) {
-         finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
+        finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
       } else {
-         finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
+        finalTrust = Math.min(analysis.trustScore, dbCalculatedScore)
       }
     }
 
     // 6. Final Range Normalization
     finalTrust = Math.max(0, Math.min(100, finalTrust))
-    
+
     if (finalTrust >= 90) finalStatus = 'SAFE'
     else if (finalTrust >= 50) finalStatus = 'SUSPICIOUS'
     else finalStatus = 'MALICIOUS'
 
-    return { 
+    return {
       result: {
         url: analysis.url,
         domain: analysis.domain,
         riskLevel: finalStatus,
         trustScore: finalTrust,
         flags: combinedFlags,
-        details: existing.docs.length > 0 
-          ? [...analysis.details, `Historical record found: ${existing.docs[0].status} (${existing.docs[0].reports_count} reports)`]
-          : analysis.details,
-        redirectChain: analysis.redirectChain
-      } as CheckResult
+        details:
+          existing.docs.length > 0
+            ? [
+                ...analysis.details,
+                `Historical record found: ${existing.docs[0].status} (${existing.docs[0].reports_count} reports)`,
+              ]
+            : analysis.details,
+        redirectChain: analysis.redirectChain,
+      } as CheckResult,
     }
   } catch (error) {
     console.error('Error checking URL:', error)
@@ -118,14 +121,16 @@ export async function checkUrlAction(prevState: any, formData: FormData) {
 export async function submitReportAction(prevState: any, formData: FormData) {
   const url = formData.get('url') as string
   const comment = formData.get('comment') as string
-  const status = formData.get('status') as string // 'SAFE', 'MALICIOUS', etc.
 
   if (!url) {
     return { error: 'URL is required.' }
   }
 
   const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
   if (authError || !user) {
     return { error: 'You must be logged in to submit a report.' }
@@ -136,11 +141,15 @@ export async function submitReportAction(prevState: any, formData: FormData) {
     const domain = new URL(url).hostname.toLowerCase()
 
     // Determine Formatted Name
-    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Anonymous';
-    const nameParts = rawName.trim().split(/\s+/);
-    let reporterName = rawName;
+    const rawName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split('@')[0] ||
+      'Anonymous'
+    const nameParts = rawName.trim().split(/\s+/)
+    let reporterName = rawName
     if (nameParts.length > 1) {
-      reporterName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0].toUpperCase()}.`;
+      reporterName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0].toUpperCase()}.`
     }
 
     const reportStatus = 'PENDING'
@@ -156,7 +165,7 @@ export async function submitReportAction(prevState: any, formData: FormData) {
         reporter_id: user.id,
         reporter_name: reporterName,
         comment: comment,
-        status: reportStatus as any, 
+        status: reportStatus as any,
       },
     })
 

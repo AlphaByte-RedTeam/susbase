@@ -24,6 +24,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { PaginationControls } from '@/components/ui/pagination-controls'
+import { cn } from '@/lib/utils'
 
 export default async function SubmissionsPage({
   searchParams,
@@ -99,6 +100,8 @@ export default async function SubmissionsPage({
                   </TableCell>
                 </TableRow>
               ) : (
+                reports.docs.map((report: any) => {
+                  const urlData = typeof report.url_id === 'object' ? report.url_id : null
                   const isYou = report.reporter_id === user?.id
                   const reporterMask = `HUNTER-${report.reporter_id?.substring(0, 10).toUpperCase()}`
                   const reporterDisplay = isYou ? 'YOU' : reporterMask
@@ -107,8 +110,8 @@ export default async function SubmissionsPage({
                     <TableRow
                       key={report.id}
                       className={cn(
-                        "group border-b last:border-0 hover:bg-muted/20 transition-colors",
-                        isYou && "bg-primary/5 border-l-2 border-l-primary/50"
+                        'group border-b last:border-0 hover:bg-muted/20 transition-colors',
+                        isYou && 'bg-primary/5 border-l-2 border-l-primary/50',
                       )}
                     >
                       <TableCell className="py-6 font-mono">
@@ -126,10 +129,12 @@ export default async function SubmissionsPage({
                         <SubmissionStatusBadge status={report.status || 'PENDING'} />
                       </TableCell>
                       <TableCell className="py-6">
-                        <span className={cn(
-                          "text-xs font-mono uppercase whitespace-nowrap",
-                          isYou ? "text-primary font-bold" : "text-muted-foreground"
-                        )}>
+                        <span
+                          className={cn(
+                            'text-xs font-mono uppercase whitespace-nowrap',
+                            isYou ? 'text-primary font-bold' : 'text-muted-foreground',
+                          )}
+                        >
                           {reporterDisplay}
                         </span>
                       </TableCell>
@@ -142,6 +147,7 @@ export default async function SubmissionsPage({
                       </TableCell>
                     </TableRow>
                   )
+                })
               )}
             </TableBody>
           </Table>
