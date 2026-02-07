@@ -146,16 +146,6 @@ img {
   display: block;
 }
 
-a {
-  color: currentColor;
-  text-decoration: none;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.7;
-  }
-}
-
 .home-container {
   display: flex;
   flex-direction: column;
