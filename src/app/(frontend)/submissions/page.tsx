@@ -101,11 +101,8 @@ export default async function SubmissionsPage({
               ) : (
                 reports.docs.map((report: any) => {
                   const urlData = typeof report.url_id === 'object' ? report.url_id : null
-                  const reporterName =
-                    report.reporter_name ||
-                    (report.reporter_id === user?.id
-                      ? 'You'
-                      : `Hunter-${report.reporter_id?.substring(0, 4)}`)
+                  const reporterMask = `HUNTER-${report.reporter_id?.substring(0, 10).toUpperCase()}`
+                  const reporterDisplay = report.reporter_id === user?.id ? 'YOU' : reporterMask
 
                   return (
                     <TableRow
@@ -128,7 +125,7 @@ export default async function SubmissionsPage({
                       </TableCell>
                       <TableCell className="py-6">
                         <span className="text-xs font-mono text-muted-foreground uppercase whitespace-nowrap">
-                          {reporterName}
+                          {reporterDisplay}
                         </span>
                       </TableCell>
                       <TableCell className="py-6 text-right text-[10px] text-muted-foreground uppercase font-mono">
