@@ -15,7 +15,7 @@ export const Reports: CollectionConfig = {
           if (!domain) return
 
           try {
-            // 1. Find if URL exists by domain
+            // 1. Update URL stats
             const existing = await payload.find({
               collection: 'urls',
               where: {
@@ -27,24 +27,21 @@ export const Reports: CollectionConfig = {
 
             if (existing.docs.length > 0) {
               const urlDoc = existing.docs[0]
-              // 2. Update existing
               await payload.update({
                 collection: 'urls',
                 id: urlDoc.id,
                 data: {
                   reports_count: (urlDoc.reports_count || 0) + 1,
-                  // Deduct 1 point per accepted report
                   trust_score: Math.max(0, (urlDoc.trust_score || 50) - 1),
                 },
               })
             } else {
-              // 3. Create new if missing
               await payload.create({
                 collection: 'urls',
                 data: {
                   url: doc.submitted_url,
                   domain: domain,
-                  status: 'MALICIOUS', // Default when accepted from report
+                  status: 'MALICIOUS', 
                   trust_score: 20,
                   reports_count: 1,
                 },

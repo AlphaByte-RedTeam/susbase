@@ -99,15 +99,17 @@ export default async function SubmissionsPage({
                   </TableCell>
                 </TableRow>
               ) : (
-                reports.docs.map((report: any) => {
-                  const urlData = typeof report.url_id === 'object' ? report.url_id : null
+                  const isYou = report.reporter_id === user?.id
                   const reporterMask = `HUNTER-${report.reporter_id?.substring(0, 10).toUpperCase()}`
-                  const reporterDisplay = report.reporter_id === user?.id ? 'YOU' : reporterMask
+                  const reporterDisplay = isYou ? 'YOU' : reporterMask
 
                   return (
                     <TableRow
                       key={report.id}
-                      className="group border-b last:border-0 hover:bg-muted/20 transition-colors"
+                      className={cn(
+                        "group border-b last:border-0 hover:bg-muted/20 transition-colors",
+                        isYou && "bg-primary/5 border-l-2 border-l-primary/50"
+                      )}
                     >
                       <TableCell className="py-6 font-mono">
                         <div className="flex flex-col gap-1">
@@ -124,7 +126,10 @@ export default async function SubmissionsPage({
                         <SubmissionStatusBadge status={report.status || 'PENDING'} />
                       </TableCell>
                       <TableCell className="py-6">
-                        <span className="text-xs font-mono text-muted-foreground uppercase whitespace-nowrap">
+                        <span className={cn(
+                          "text-xs font-mono uppercase whitespace-nowrap",
+                          isYou ? "text-primary font-bold" : "text-muted-foreground"
+                        )}>
                           {reporterDisplay}
                         </span>
                       </TableCell>
@@ -137,7 +142,6 @@ export default async function SubmissionsPage({
                       </TableCell>
                     </TableRow>
                   )
-                })
               )}
             </TableBody>
           </Table>
