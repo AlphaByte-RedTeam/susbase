@@ -8,9 +8,11 @@ export const Reports: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ doc, req, operation }) => {
-        if (operation === 'update' && doc.status === 'ACCEPTED') {
+        if ((operation === 'create' || operation === 'update') && doc.status === 'ACCEPTED') {
           const { payload } = req
           const domain = doc.submitted_domain
+          const comment = doc.comment || ''
+          const isMaliciousIntent = comment.includes('[Intent: MALICIOUS]')
 
           if (!domain) return
 
@@ -25,24 +27,55 @@ export const Reports: CollectionConfig = {
               },
             })
 
+            // Check if it is an HVT variation (Impersonation)
+            const hvtVariation = await payload.find({
+              collection: 'high-value-targets',
+              where: {
+                'variations.domain': {
+                  equals: domain,
+                },
+              },
+            })
+            const isHvtVariation = hvtVariation.docs.length > 0
+
             if (existing.docs.length > 0) {
               const urlDoc = existing.docs[0]
+              const newReportsCount = (urlDoc.reports_count || 0) + 1
+              
+              // Reduce trust score on report acceptance
+              const newTrustScore = Math.max(0, (urlDoc.trust_score || 50) - 5)
+              
+              let newStatus = urlDoc.status
+              
+              // Auto-Reviewed Algorithm / Jail Intent:
+              // If it's already in our DB and reported as malicious, or trust score drops too low,
+              // or it is a known HVT variation.
+              if (isHvtVariation || isMaliciousIntent || newTrustScore < 50) {
+                newStatus = 'MALICIOUS'
+              } else if (newTrustScore >= 90) {
+                newStatus = 'SAFE'
+              } else {
+                newStatus = 'SUSPICIOUS'
+              }
+
               await payload.update({
                 collection: 'urls',
                 id: urlDoc.id,
                 data: {
-                  reports_count: (urlDoc.reports_count || 0) + 1,
-                  trust_score: Math.max(0, (urlDoc.trust_score || 50) - 1),
+                  reports_count: newReportsCount,
+                  trust_score: newTrustScore,
+                  status: newStatus as any,
                 },
               })
             } else {
               // 3. Create new if missing
-              // Determine status/score from intent in comment
-              const comment = doc.comment || ''
               let initialStatus = 'MALICIOUS'
               let initialScore = 20
 
-              if (comment.includes('[Intent: SAFE]')) {
+              if (isHvtVariation) {
+                initialStatus = 'MALICIOUS'
+                initialScore = 0
+              } else if (comment.includes('[Intent: SAFE]')) {
                 initialStatus = 'SAFE'
                 initialScore = 100
               }

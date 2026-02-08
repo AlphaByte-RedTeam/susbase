@@ -160,7 +160,41 @@ export async function submitReportAction(prevState: any, formData: FormData) {
 
   try {
     const payload = await getPayload({ config })
-    const domain = new URL(url).hostname.toLowerCase()
+    
+    // Extract domain strictly for DB lookups (consistent with checkUrlAction)
+    let domain = ''
+    try {
+      const urlObj = new URL(url)
+      domain = urlObj.hostname.replace(/^www\./, '')
+    } catch (e) {
+      domain = url.split('/')[2]?.replace(/^www\./, '') || url.split('/')[0]?.replace(/^www\./, '')
+    }
+
+    if (!domain) {
+      return { error: 'Invalid URL format' }
+    }
+
+    // 1. Auto-Review: Check if domain exists in DB or is an HVT variation
+    const existing = await payload.find({
+      collection: 'urls',
+      where: {
+        domain: {
+          equals: domain,
+        },
+      },
+    })
+
+    const hvtVariation = await payload.find({
+      collection: 'high-value-targets',
+      where: {
+        'variations.domain': {
+          equals: domain,
+        },
+      },
+    })
+
+    const isExisting = existing.docs.length > 0 || hvtVariation.docs.length > 0
+    const reportStatus = isExisting ? 'ACCEPTED' : 'PENDING'
 
     // Determine Formatted Name
     const rawName =
@@ -173,8 +207,6 @@ export async function submitReportAction(prevState: any, formData: FormData) {
     if (nameParts.length > 1) {
       reporterName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0].toUpperCase()}.`
     }
-
-    const reportStatus = 'PENDING'
 
     // 2. Create Report
     // We store the intent in the comment for the admin/hook to see
